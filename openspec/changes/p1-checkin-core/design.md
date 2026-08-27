@@ -42,12 +42,12 @@ wish_redemptions  (id uuid pk, owner_id text not null, wish_id uuid references w
 
 **备选**：余额冗余字段。否决——双写不一致风险大于聚合查询成本（家庭数据量级下聚合无压力）。
 
-### D2 认证：CloudBase 邮箱密码登录 + 前端路由守卫
+### D2 认证：CloudBase 邮箱登录 + 前端路由守卫
 
-- CloudBase 原生支持 `signUpWithEmailAndPassword` / `signInWithEmailAndPassword`，登录态由 `@cloudbase/js-sdk` 自动持久化（localStorage），满足"会话保持"。
-- 前置条件：开启邮箱登录并配置 SMTP 发件人（经 MCP manageAppAuth 完成，无需控制台界面操作；QQ 邮箱需授权码，用量极低）。
-- Web 安全域名：需将 EdgeOne Pages 默认域名加入 CloudBase 环境「安全配置 → Web 安全域名」。
-- 路由守卫：未登录访问业务路由重定向 `/login`；SDK 登录态监听登出。
+- 使用 `@cloudbase/js-sdk` v3 认证 API（supabase-like，2026-08-27 经官方 auth-tool 指南核实）：注册走邮箱验证码流程（`auth.signUp({ email, password })` + getVerification/verify 验证码确认）；登录用 `auth.signInWithPassword({ email, password })`；会话查询用 `auth.getSession()`（禁用 getUser/getLoginState 旧 API）。登录态由 SDK 自动持久化（localStorage），满足"会话保持"。
+- 前置条件（已完成 2026-08-27）：邮箱登录已开启、SMTP 发件人已配置并验证生效。
+- Web 安全域名：需将 EdgeOne Pages 默认域名加入 CloudBase 环境「安全配置 → Web 安全域名」（随 task 7.1 部署执行）。
+- 路由守卫：未登录访问业务路由重定向 `/login`；守卫判定基于 `auth.getSession()` 返回的 session 存在性。
 - 数据安全主要靠 PostgreSQL 行级安全 RLS（守卫只是体验层）——即使前端被绕过，数据库仍拒绝跨账号读写。
 
 ### D3 日期边界：Asia/Shanghai 固定时区（不变）
