@@ -1,0 +1,14 @@
+[
+  { "id": "book", "emoji": "📖", "color": "#BFDBFE" },
+  { "id": "english", "emoji": "🔤", "color": "#DDD6FE" },
+  { "id": "math", "emoji": "🔢", "color": "#C7F9CC" },
+  { "id": "music", "emoji": "🎵", "color": "#FBCFE8" },
+  { "id": "art", "emoji": "🎨", "color": "#FDE68A" },
+  { "id": "sport", "emoji": "⚽", "color": "#BBF7D0" },
+  { "id": "puzzle", "emoji": "🧩", "color": "#FDBA74" },
+  { "id": "poem", "emoji": "🌸", "color": "#FBCFE8" },
+  { "id": "piano", "emoji": "🎹", "color": "#E9D5FF" },
+  { "id": "read", "emoji": "📚", "color": "#A5F3FC" },
+  { "id": "star", "emoji": "⭐", "color": "#FEF08A" },
+  { "id": "science", "emoji": "🔬", "color": "#BFDBFE" }
+]

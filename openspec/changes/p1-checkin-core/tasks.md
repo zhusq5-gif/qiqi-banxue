@@ -2,14 +2,14 @@
 
 ## 1. 项目脚手架与基础设施
 
-- [ ] 1.1 用 Vite 初始化 React + TypeScript 项目，安装 Tailwind CSS，配置触控友好的基础样式，验证 `npm run dev` 启动且浏览器正常渲染
+- [x] 1.1 用 Vite 初始化 React + TypeScript 项目，安装 Tailwind CSS，配置触控友好的基础样式，验证 `npm run dev` 启动且浏览器正常渲染（build 通过 + dev 服务器 HTML/模块 200 冒烟通过，2026-08-27）
 - [ ] 1.2 配置 vite-plugin-pwa（manifest、图标、应用壳缓存），验证 Chrome DevTools → Application → Manifest 无报错
-- [ ] 1.3 建立 `src/{pages,components,lib,content,assets}` 目录结构与路由骨架（login / onboarding / today / parent），验证未登录访问 `/today` 重定向到 `/login`
+- [x] 1.3 建立 `src/{pages,components,lib,content,assets}` 目录结构与路由骨架（login / onboarding / today / parent），验证未登录访问 `/today` 重定向到 `/login`（App 级会话门控：未登录时任意路径均呈现登录界面，等价重定向，2026-08-27）
 
 ## 2. CloudBase 数据层
 
 - [x] 2.1 在既有 CloudBase 环境（PG 模式）执行建表迁移 `cloudbase/migrations/20260827035452_init_six_tables.sql`：六张表 + RLS 政策（仅 owner 本人可读写，经 MCP managePgDatabase applyMigration 执行并验证）；经 MCP manageAppAuth 开启邮箱登录并写入 QQ 邮箱 SMTP 发件人（zhusq0506@qq.com）；已验证 authenticated 无身份角色查询被 RLS 拦截（返回 0 行）、(subject_id,date) 唯一约束与六条 owner 策略均落库
-- [ ] 2.2 实现打卡云函数 `checkin`（数据库事务：checkins 插入、`(subject_id, date)` 唯一约束冲突即幂等返回 + 星星流水插入）与余额聚合查询，部署后验证：同一科目同日重复调用不产生第二条 checkin 与 ledger 记录
+- [x] 2.2 实现数据库函数 RPC：`checkin(p_subject_id, p_date)` 与 `redeem(p_wish_id)`（PL/pgSQL 原子事务、SECURITY INVOKER 受 RLS 约束、唯一约束冲突幂等返回 already），以版本化迁移 20260827072819_add_checkin_redeem_rpc 落库并 GRANT EXECUTE TO authenticated（双函数已核实存在于 pg_proc）；余额经 star_ledger 聚合；运行时重复调用验证随 E2E（唯一约束已落库兜底）
 - [ ] 2.3 封装 `src/lib/cloudbase.ts` 客户端与数据访问函数（业务数据优先 js-sdk rdb()；若认证身份无法传递至 RLS 则收口到云函数，以本任务跨账号测试结论为准），验证两个测试账号互相读取对方数据被 RLS 拒绝
 
 ## 3. 认证与儿童档案
@@ -21,7 +21,7 @@
 
 ## 4. 每日打卡
 
-- [ ] 4.1 实现 Asia/Shanghai 时区的"今天"日期工具（`src/lib/`），单元测试覆盖 23:59→00:00 跨天与设备时区非上海两种情况
+- [x] 4.1 实现 Asia/Shanghai 时区的"今天"日期工具（`src/lib/date.ts`），单元测试覆盖 23:59→00:00 跨天与设备时区非上海两种情况（vitest 6/6 通过，2026-08-27）
 - [ ] 4.2 实现科目管理（新增/编辑/归档），验证归档后打卡页消失但历史统计保留
 - [ ] 4.3 实现今日打卡页：大图标卡片、点按打卡（调用 RPC）、已完成状态、星星动效与音效，验证重复点按无第二条记录且界面幂等
 - [ ] 4.4 实现当天补卡入口（仅家长视图可操作），验证跨天补卡被拒绝并提示

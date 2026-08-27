@@ -1,0 +1,10 @@
+[
+  { "id": "cat", "emoji": "🐱", "color": "#FDE68A" },
+  { "id": "panda", "emoji": "🐼", "color": "#D1FAE5" },
+  { "id": "fox", "emoji": "🦊", "color": "#FED7AA" },
+  { "id": "tiger", "emoji": "🐯", "color": "#FEF3C7" },
+  { "id": "bunny", "emoji": "🐰", "color": "#FBCFE8" },
+  { "id": "lion", "emoji": "🦁", "color": "#FEE2E2" },
+  { "id": "frog", "emoji": "🐸", "color": "#BBF7D0" },
+  { "id": "bear", "emoji": "🐻", "color": "#E7E5E4" }
+]

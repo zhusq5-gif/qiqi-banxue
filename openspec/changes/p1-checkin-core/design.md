@@ -65,8 +65,7 @@ src/
   content/      静态内容 JSON（P1：头像/图标清单；P2+：字母、古诗题库）
   assets/       SVG
 cloudbase/
-  functions/checkin/    打卡云函数（事务）
-  migrations/           建表 SQL + RLS 政策（版本化迁移，官方工作流）
+  migrations/           建表 SQL + RLS 政策 + RPC 数据库函数（版本化迁移，官方工作流）
 ```
 
 `content/` 目录从 P1 就建立，P2/P3 的内容玩法数据统一放这里，与代码解耦。
@@ -77,11 +76,16 @@ cloudbase/
 
 **备选**：离线优先 + 后台同步（IndexedDB + sync 队列）。否决——复杂度高一个量级，家庭 Wi-Fi 场景收益低，留待真实使用后评估。
 
-### D6 打卡与星星的一致性：云函数事务
+### D6 打卡与星星的一致性：数据库函数（RPC）事务
 
-打卡成功 = `checkins` 插入 + `star_ledger` 插入（reason=checkin），两步封装在云函数 `checkin` 的数据库事务中，前端通过 `callFunction` 调用。避免前端两次请求中途失败造成"打卡了没星星"。`(subject_id, date)` 唯一约束冲突时（重复打卡）云函数捕获约束冲突并直接返回成功，不插入流水。
+官方 FAQ 明确云开发 PostgreSQL SDK 不直接支持客户端事务，推荐"数据库 RPC 封装事务"（2026-08-27 核实）。据此实现两个 PL/pgSQL 数据库函数（SECURITY INVOKER，以调用者身份运行、受 RLS 约束、auth.uid() 可用）：
 
-**备选**：前端两次直写数据库。否决——无事务保证；且云函数个人版冷启动约 80–120ms，延迟可接受。
+- `checkin(p_subject_id, p_date)`：插入 checkins（唯一约束冲突即幂等返回 already=true）+ 插入 star_ledger 收入，函数体原子；
+- `redeem(p_wish_id)`：校验余额 → 插入 wish_redemptions + star_ledger 支出，原子。
+
+前端通过 `db.rpc('checkin', {...})` 调用。避免前端两次请求中途失败造成"打卡了没星星"。
+
+**备选**：Node 云函数封装事务。否决——多一层部署面且 node-sdk 访问 PG 路径未官方文档化；RPC 方案事务直接在数据库内完成，最简。
 
 ## Risks / Trade-offs
 
