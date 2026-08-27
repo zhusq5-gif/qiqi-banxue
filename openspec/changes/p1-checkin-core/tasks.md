@@ -40,5 +40,5 @@
 
 ## 7. 部署上线
 
-- [ ] 7.1 仓库初始化并推送 GitHub（使用已连接 GitHub MCP，不用 gh CLI），EdgeOne Pages 导入该仓库自动构建部署，配置环境变量 `VITE_TCB_ENV_ID`，并将 Pages 域名加入 CloudBase Web 安全域名
+- [x] 7.1 仓库已推送 GitHub（gh CLI 凭证 + git push，经 chester 授权替代只读 MCP）；EdgeOne Makers 部署 dist/ 静态产物上线（项目 qiqi-banxue，中国站；Vite 环境变量已在本地构建时注入 dist，无需线上环境变量）；Pages 域名 qiqi-banxue-xpnba4ki.edgeone.cool 已加入 CloudBase 安全域名并 ENABLE（2026-08-27）
 - [ ] 7.2 端到端验收：iPad Safari 打开线上地址→登录→添加科目→打卡→得星→兑换→导出，全流程通过；"添加到主屏幕"后全屏运行正常
