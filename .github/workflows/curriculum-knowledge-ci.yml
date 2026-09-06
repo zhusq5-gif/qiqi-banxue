@@ -1,0 +1,31 @@
+name: Curriculum Knowledge CI
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/KnowledgeMap.tsx'
+      - 'src/App.tsx'
+      - 'openspec/changes/curriculum-knowledge-map/**'
+      - '.github/workflows/curriculum-knowledge-ci.yml'
+  push:
+    branches:
+      - feat/curriculum-knowledge-v03
+    paths:
+      - 'src/pages/KnowledgeMap.tsx'
+      - 'src/App.tsx'
+      - 'openspec/changes/curriculum-knowledge-map/**'
+      - '.github/workflows/curriculum-knowledge-ci.yml'
+
+jobs:
+  app-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm test -- --passWithNoTests
