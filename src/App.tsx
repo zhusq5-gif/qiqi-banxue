@@ -6,6 +6,7 @@ import Today from './pages/Today'
 import Parent from './pages/Parent'
 import KnowledgeMap from './pages/KnowledgeMap'
 import CurriculumReview from './pages/CurriculumReview'
+import CurriculumStandards from './pages/CurriculumStandards'
 import { getProfile, getSessionUser, type Profile } from './lib/cloudbase'
 
 type AppState = 'loading' | 'login' | 'onboarding' | 'ready'
@@ -55,6 +56,7 @@ export default function App() {
       />
       <Route path="/knowledge-map" element={<KnowledgeMap />} />
       <Route path="/knowledge-map/review" element={<CurriculumReview />} />
+      <Route path="/knowledge-map/standards" element={<CurriculumStandards />} />
       <Route path="*" element={<Navigate to="/today" replace />} />
     </Routes>
   )
