@@ -18,6 +18,7 @@ import {
   type CurriculumTextbook,
   type CurriculumView,
 } from '../content/curriculum/curriculum'
+import { buildResearchHtml, createResearchSnapshot, downloadTextFile } from '../content/curriculum/researchExport'
 
 const viewLabels: Record<CurriculumView, string> = {
   textbook: '教材目录',
@@ -177,6 +178,29 @@ export default function KnowledgeMap() {
     }
   }
 
+  function currentSnapshot() {
+    return createResearchSnapshot({
+      datasetVersion: curriculumSeed.datasetVersion,
+      subject,
+      grade: grade || null,
+      view,
+      query,
+      textbook: view === 'textbook' ? selectedTextbook : null,
+      entries: view === 'relations' ? [] : visibleEntries,
+      candidates: view === 'relations' ? visibleCandidates : [],
+    })
+  }
+
+  function exportJson() {
+    const snapshot = currentSnapshot()
+    downloadTextFile(`qiqi-curriculum-${subject}-${view}.json`, JSON.stringify(snapshot, null, 2), 'application/json')
+  }
+
+  function exportHtml() {
+    const snapshot = currentSnapshot()
+    downloadTextFile(`qiqi-curriculum-${subject}-${view}.html`, buildResearchHtml(snapshot), 'text/html;charset=utf-8')
+  }
+
   const stats = curriculumSeed.stats
 
   return (
@@ -190,6 +214,8 @@ export default function KnowledgeMap() {
           <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-500">{curriculumSeed.scopeNote}</p>
         </div>
         <div className="flex flex-wrap gap-2 self-start md:self-auto">
+          <button type="button" onClick={exportJson} className="rounded-full bg-stone-100 px-4 py-2 text-sm font-black text-stone-700">导出 JSON</button>
+          <button type="button" onClick={exportHtml} className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">导出离线 HTML</button>
           <Link to="/knowledge-map/review" className="rounded-full bg-rose-100 px-4 py-2 text-sm font-black text-rose-700">修订工作台 · {stats.issues}</Link>
           <Link to="/parent" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-stone-700 shadow active:scale-95">返回家长视图</Link>
         </div>
