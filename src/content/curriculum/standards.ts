@@ -1,11 +1,13 @@
 import rawStandards from './curriculum-standards-v2022.json'
 import rawExpansion from './curriculum-standards-expansion-v01.json'
+import rawExpansion2 from './curriculum-standards-expansion-v02.json'
 import rawMathDocument from './curriculum-standard-math-document-v01.json'
 import type { CurriculumSubject } from './curriculum'
 
 export type StandardEvidenceStatus = 'official_source_verified'
 export type StandardMappingStatus = 'candidate_review'
 export type StandardMappingRelation = 'supports' | 'contextual' | 'direct'
+export type StandardEvidenceScope = 'standard_document' | 'official_interpretation' | 'pedagogical_principle'
 
 export interface CurriculumStandardDocument {
   id: string
@@ -31,6 +33,7 @@ export interface CurriculumStandardClause {
   sourceUrl: string
   sourceLocator: string
   evidenceStatus: StandardEvidenceStatus
+  evidenceScope?: StandardEvidenceScope
   mappingPolicy: string
 }
 
@@ -65,15 +68,16 @@ type CurriculumStandardDocumentExpansion = {
 
 const base = rawStandards as CurriculumStandardsDataset
 const expansion = rawExpansion as CurriculumStandardsExpansion
+const expansion2 = rawExpansion2 as CurriculumStandardsExpansion
 const mathDocument = rawMathDocument as CurriculumStandardDocumentExpansion
 
 export const curriculumStandards: CurriculumStandardsDataset = {
-  datasetVersion: `${base.datasetVersion}+${expansion.datasetVersion}+${mathDocument.datasetVersion}`,
+  datasetVersion: `${base.datasetVersion}+${expansion.datasetVersion}+${expansion2.datasetVersion}+${mathDocument.datasetVersion}`,
   status: 'research_only',
-  scopeNote: `${base.scopeNote} ${expansion.scopeNote} 数学当前只登记2022版标准文档元数据，具体条款尚待可核证据结构化。`,
+  scopeNote: `${base.scopeNote} ${expansion.scopeNote} ${expansion2.scopeNote} 数学当前只登记2022版标准文档元数据，具体条款尚待可核证据结构化。`,
   documents: [...base.documents, ...mathDocument.documents],
-  clauses: [...base.clauses, ...expansion.clauses],
-  mappings: [...base.mappings, ...expansion.mappings],
+  clauses: [...base.clauses, ...expansion.clauses, ...expansion2.clauses],
+  mappings: [...base.mappings, ...expansion.mappings, ...expansion2.mappings],
 }
 
 export function standardDocumentById(id: string) {
