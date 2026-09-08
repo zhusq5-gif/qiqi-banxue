@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  mathFineEdgeById,
   mathFineEdgesByType,
   mathFineEdgesForTheme,
   mathFineNodeById,
@@ -22,33 +23,38 @@ describe('K12-KGraph fine-grained primary math excerpt', () => {
     expect(mathFineSample.source.rawUrl).toContain('/subject_specific_KG/math.json')
   })
 
-  it('expands the raw excerpt across three primary math themes', () => {
+  it('expands the raw excerpt into three cross-grade primary math themes', () => {
     expect(mathFineSample.themes).toHaveLength(3)
     expect(mathFineSample.themes.map((item) => item.id)).toEqual([
       'number_algebra',
       'geometry',
       'statistics_probability',
     ])
-    expect(mathFineNodesForTheme('number_algebra')).toHaveLength(12)
-    expect(mathFineNodesForTheme('geometry')).toHaveLength(11)
-    expect(mathFineNodesForTheme('statistics_probability')).toHaveLength(10)
-    expect(mathFineEdgesForTheme('number_algebra')).toHaveLength(26)
-    expect(mathFineEdgesForTheme('geometry')).toHaveLength(19)
-    expect(mathFineEdgesForTheme('statistics_probability')).toHaveLength(17)
-    expect(mathFineThemeById('geometry')?.chapterIds).toContain('math_3a_rjb_ch7')
+    expect(mathFineNodesForTheme('number_algebra')).toHaveLength(29)
+    expect(mathFineNodesForTheme('geometry')).toHaveLength(34)
+    expect(mathFineNodesForTheme('statistics_probability')).toHaveLength(32)
+    expect(mathFineEdgesForTheme('number_algebra')).toHaveLength(53)
+    expect(mathFineEdgesForTheme('geometry')).toHaveLength(49)
+    expect(mathFineEdgesForTheme('statistics_probability')).toHaveLength(46)
+    expect(mathFineThemeById('number_algebra')?.chapterIds).toEqual([
+      'math_3a_rjb_ch8',
+      'math_5b_rjb_ch4',
+      'math_6a_rjb_ch1',
+      'math_6a_rjb_ch3',
+    ])
   })
 
   it('contains distinct Concept Skill Exercise and Chapter nodes', () => {
-    expect(mathFineSample.nodes).toHaveLength(59)
-    expect(mathFineNodesByLabel('Chapter')).toHaveLength(6)
-    expect(mathFineNodesByLabel('Concept')).toHaveLength(24)
-    expect(mathFineNodesByLabel('Skill')).toHaveLength(11)
-    expect(mathFineNodesByLabel('Exercise')).toHaveLength(18)
+    expect(mathFineSample.nodes).toHaveLength(121)
+    expect(mathFineNodesByLabel('Chapter')).toHaveLength(16)
+    expect(mathFineNodesByLabel('Concept')).toHaveLength(56)
+    expect(mathFineNodesByLabel('Skill')).toHaveLength(20)
+    expect(mathFineNodesByLabel('Exercise')).toHaveLength(29)
     expect(unique(mathFineSample.nodes.map((item) => item.id))).toBe(true)
   })
 
   it('keeps every excerpt edge resolvable inside the excerpt', () => {
-    expect(mathFineSample.edges).toHaveLength(93)
+    expect(mathFineSample.edges).toHaveLength(179)
     expect(unique(mathFineSample.edges.map((item) => item.id))).toBe(true)
     for (const edge of mathFineSample.edges) {
       expect(mathFineNodeById(edge.source), edge.id).not.toBeNull()
@@ -57,35 +63,51 @@ describe('K12-KGraph fine-grained primary math excerpt', () => {
     }
   })
 
-  it('preserves raw prerequisite and assessment relation types', () => {
-    expect(mathFineEdgesByType('prerequisites_for').length).toBeGreaterThanOrEqual(13)
-    expect(mathFineEdgesByType('tests_concept').length).toBeGreaterThanOrEqual(17)
-    expect(mathFineEdgesByType('tests_skill').length).toBeGreaterThanOrEqual(8)
-    expect(mathFineEdgesByType('appears_in').length).toBeGreaterThanOrEqual(35)
-
-    const exercise1Concept = mathFineSample.edges.find((item) => item.id === 'fine-e20')
-    expect(exercise1Concept?.source).toBe('math_1a_rjb_exe1')
-    expect(exercise1Concept?.target).toBe('math_1a_rjb_cpt2')
-    expect(exercise1Concept?.type).toBe('tests_concept')
-
-    const fractionAssessment = mathFineSample.edges.find((item) => item.id === 'fine-v2-e42')
-    expect(fractionAssessment?.source).toBe('math_3a_rjb_exe20')
-    expect(fractionAssessment?.target).toBe('math_3a_rjb_cpt29')
-    expect(fractionAssessment?.type).toBe('tests_concept')
-
-    const probabilityPrerequisite = mathFineSample.edges.find((item) => item.id === 'fine-v2-e50')
-    expect(probabilityPrerequisite?.source).toBe('math_5a_rjb_cpt16')
-    expect(probabilityPrerequisite?.target).toBe('math_5a_rjb_skl8')
-    expect(probabilityPrerequisite?.type).toBe('prerequisites_for')
+  it('keeps research sequence separate from raw prerequisite semantics', () => {
+    expect(mathFineSample.progressions).toHaveLength(3)
+    for (const progression of mathFineSample.progressions) {
+      expect(progression.status).toBe('research_sequence')
+      expect(progression.stages.length).toBeGreaterThanOrEqual(4)
+      for (const stage of progression.stages) {
+        expect(mathFineNodeById(stage.chapterId), `${progression.id}:${stage.chapterId}`).not.toBeNull()
+        for (const anchorId of stage.anchorIds) {
+          expect(mathFineNodeById(anchorId), `${progression.id}:${anchorId}`).not.toBeNull()
+        }
+      }
+      for (const rawEdgeId of progression.formalRawEdgeIds) {
+        expect(mathFineEdgeById(rawEdgeId), `${progression.id}:${rawEdgeId}`).not.toBeNull()
+      }
+    }
+    expect(mathFineSample.edges.some((edge) => edge.type === ('research_sequence' as never))).toBe(false)
   })
 
-  it('preserves a cross-grade geometry relation instead of flattening it', () => {
+  it('preserves raw prerequisite and assessment relation types', () => {
+    expect(mathFineEdgesByType('prerequisites_for').length).toBeGreaterThanOrEqual(25)
+    expect(mathFineEdgesByType('tests_concept').length).toBeGreaterThanOrEqual(25)
+    expect(mathFineEdgesByType('tests_skill').length).toBeGreaterThanOrEqual(14)
+    expect(mathFineEdgesByType('appears_in').length).toBeGreaterThanOrEqual(75)
+
+    const fractionAssessment = mathFineSample.edges.find((item) => item.id === 'fine-v3-e16')
+    expect(fractionAssessment?.source).toBe('math_6a_rjb_exe2')
+    expect(fractionAssessment?.target).toBe('math_6a_rjb_cpt2')
+    expect(fractionAssessment?.type).toBe('tests_concept')
+
+    const statisticsProgression = mathFineSample.edges.find((item) => item.id === 'fine-v3-e67')
+    expect(statisticsProgression?.source).toBe('math_5b_rjb_cpt38')
+    expect(statisticsProgression?.target).toBe('math_4a_rjb_cpt35')
+    expect(statisticsProgression?.type).toBe('relates_to')
+  })
+
+  it('preserves cross-grade raw relations instead of flattening them', () => {
     const rectangleToQuadrilateral = mathFineSample.edges.find((item) => item.id === 'fine-v2-e01')
     expect(rectangleToQuadrilateral?.source).toBe('math_1b_rjb_cpt2')
     expect(rectangleToQuadrilateral?.target).toBe('math_3a_rjb_cpt23')
     expect(rectangleToQuadrilateral?.type).toBe('is_a')
-    expect(mathFineNodeById('math_1b_rjb_cpt2')?.name).toBe('长方形')
-    expect(mathFineNodeById('math_3a_rjb_cpt23')?.name).toBe('四边形')
+
+    const lineToBar = mathFineSample.edges.find((item) => item.id === 'fine-v3-e67')
+    expect(lineToBar?.source).toBe('math_5b_rjb_cpt38')
+    expect(lineToBar?.target).toBe('math_4a_rjb_cpt35')
+    expect(lineToBar?.type).toBe('relates_to')
   })
 
   it('does not relabel raw graph edges as benchmark evidence', () => {
