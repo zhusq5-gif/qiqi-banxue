@@ -2,9 +2,13 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   mathFineEdgesForNode,
+  mathFineEdgesForTheme,
   mathFineNodeById,
+  mathFineNodesForTheme,
   mathFineSample,
+  mathFineThemesForNode,
   type MathFineNodeLabel,
+  type MathFineThemeId,
 } from '../content/curriculum/mathFineSample'
 
 const labelText: Record<MathFineNodeLabel, string> = {
@@ -24,20 +28,45 @@ const labelClass: Record<MathFineNodeLabel, string> = {
 export default function MathFineGraphSample() {
   const firstNode = mathFineSample.nodes.find((item) => item.label === 'Concept') ?? mathFineSample.nodes[0]
   const [label, setLabel] = useState<'all' | MathFineNodeLabel>('all')
+  const [theme, setTheme] = useState<'all' | MathFineThemeId>('all')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState(firstNode?.id ?? '')
+
+  const themeNodeIds = useMemo(() => {
+    if (theme === 'all') return null
+    return new Set(mathFineNodesForTheme(theme).map((node) => node.id))
+  }, [theme])
+
+  const themeEdgeIds = useMemo(() => {
+    if (theme === 'all') return null
+    return new Set(mathFineEdgesForTheme(theme).map((edge) => edge.id))
+  }, [theme])
 
   const visibleNodes = useMemo(() => {
     const q = query.trim().toLowerCase()
     return mathFineSample.nodes.filter((node) => {
+      if (themeNodeIds && !themeNodeIds.has(node.id)) return false
       if (label !== 'all' && node.label !== label) return false
       if (!q) return true
       return `${node.name} ${node.id} ${JSON.stringify(node.properties)}`.toLowerCase().includes(q)
     })
-  }, [label, query])
+  }, [label, query, themeNodeIds])
 
   const selected = mathFineNodeById(selectedId)
-  const edges = selected ? mathFineEdgesForNode(selected.id) : []
+  const edges = selected
+    ? mathFineEdgesForNode(selected.id).filter((edge) => !themeEdgeIds || themeEdgeIds.has(edge.id))
+    : []
+  const selectedThemes = selected ? mathFineThemesForNode(selected.id) : []
+
+  function chooseTheme(next: 'all' | MathFineThemeId) {
+    setTheme(next)
+    setLabel('all')
+    setQuery('')
+    if (next === 'all') return
+    const nodes = mathFineNodesForTheme(next)
+    const preferred = nodes.find((node) => node.label === 'Concept') ?? nodes[0]
+    if (preferred) setSelectedId(preferred.id)
+  }
 
   return (
     <div className="mx-auto min-h-full max-w-7xl px-4 pb-20 pt-5">
@@ -46,9 +75,10 @@ export default function MathFineGraphSample() {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-black text-stone-900">小学数学细粒度原始子图</h1>
             <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-black text-sky-700">Concept / Skill / Exercise</span>
+            <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black text-violet-700">3 个主题</span>
             <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-700">research_only</span>
           </div>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-500">{mathFineSample.scope}。本页直接截取 K12-KGraph `subject_specific_KG/math.json` 的可定位原始节点与关系，不经过 benchmark 关系转译。</p>
+          <p className="mt-2 max-w-4xl text-sm leading-6 text-stone-500">{mathFineSample.scope}。本页直接截取 K12-KGraph `subject_specific_KG/math.json` 的可定位原始节点与关系，不经过 benchmark 关系转译。</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/knowledge-map/math-sample" className="rounded-full bg-white px-4 py-2 text-sm font-black text-stone-700 shadow">返回数学样板</Link>
@@ -59,10 +89,10 @@ export default function MathFineGraphSample() {
       <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-6">
         {[
           ['原始节点', mathFineSample.nodes.length],
+          ['主题', mathFineSample.themes.length],
           ['Concept', mathFineSample.nodes.filter((item) => item.label === 'Concept').length],
           ['Skill', mathFineSample.nodes.filter((item) => item.label === 'Skill').length],
           ['Exercise', mathFineSample.nodes.filter((item) => item.label === 'Exercise').length],
-          ['Chapter', mathFineSample.nodes.filter((item) => item.label === 'Chapter').length],
           ['原始关系', mathFineSample.edges.length],
         ].map(([name, value]) => (
           <div key={name} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
@@ -72,21 +102,46 @@ export default function MathFineGraphSample() {
         ))}
       </section>
 
+      <section className="mt-4 grid gap-3 md:grid-cols-3">
+        {mathFineSample.themes.map((item) => {
+          const nodes = mathFineNodesForTheme(item.id)
+          const themeEdges = mathFineEdgesForTheme(item.id)
+          const chapterNames = item.chapterIds.map((id) => mathFineNodeById(id)?.name ?? id).join('、')
+          const active = theme === item.id
+          return (
+            <button key={item.id} type="button" onClick={() => chooseTheme(item.id)} className={`rounded-3xl border p-4 text-left transition ${active ? 'border-violet-300 bg-violet-50 shadow-sm' : 'border-stone-100 bg-white hover:border-stone-200'}`}>
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-sm font-black text-stone-900">{item.label}</div>
+                <span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-black text-stone-500">{item.grade}年级{item.semester === 1 ? '上' : '下'}</span>
+              </div>
+              <div className="mt-1 text-xs font-bold text-violet-700">{chapterNames}</div>
+              <p className="mt-2 text-xs leading-5 text-stone-500">{item.description}</p>
+              <div className="mt-3 text-[11px] font-black text-stone-400">{nodes.length} 节点 · {themeEdges.length} 边</div>
+            </button>
+          )
+        })}
+      </section>
+
       <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-xs leading-5 text-rose-700">
-        数据许可：<strong>{mathFineSample.source.license}</strong>。当前不能作为商业正式知识库直接再分发；本页仅用于数据模型、关系类型和 UI 研究。
+        数据许可：<strong>{mathFineSample.source.license}</strong>。当前不能作为商业正式知识库直接再分发；本页仅用于数据模型、关系类型和 UI 研究。主题标签是本系统为浏览而增加的本地元数据，节点 ID、属性和边类型保持原始 provenance。
       </div>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         <main className="rounded-3xl bg-white p-4 shadow">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap gap-1.5">
-              {(['all', 'Concept', 'Skill', 'Exercise', 'Chapter'] as const).map((item) => (
-                <button key={item} type="button" onClick={() => setLabel(item)} className={`rounded-full px-3 py-1.5 text-xs font-black ${label === item ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600'}`}>
-                  {item === 'all' ? '全部' : labelText[item]}
-                </button>
-              ))}
+              <button type="button" onClick={() => chooseTheme('all')} className={`rounded-full px-3 py-1.5 text-xs font-black ${theme === 'all' ? 'bg-violet-600 text-white' : 'bg-violet-50 text-violet-700'}`}>全部主题</button>
+              {mathFineSample.themes.map((item) => <button key={item.id} type="button" onClick={() => chooseTheme(item.id)} className={`rounded-full px-3 py-1.5 text-xs font-black ${theme === item.id ? 'bg-violet-600 text-white' : 'bg-violet-50 text-violet-700'}`}>{item.label}</button>)}
             </div>
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索节点、ID 或属性" className="h-10 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 text-sm outline-none focus:border-sky-400 md:max-w-sm" />
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {(['all', 'Concept', 'Skill', 'Exercise', 'Chapter'] as const).map((item) => (
+              <button key={item} type="button" onClick={() => setLabel(item)} className={`rounded-full px-3 py-1.5 text-xs font-black ${label === item ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600'}`}>
+                {item === 'all' ? '全部类型' : labelText[item]}
+              </button>
+            ))}
           </div>
 
           <div className="mt-3 text-xs font-bold text-stone-400">显示 {visibleNodes.length} / {mathFineSample.nodes.length} 个节点</div>
@@ -101,6 +156,7 @@ export default function MathFineGraphSample() {
                 <div className="mt-2 text-[10px] text-stone-400">{node.sourceLocator}</div>
               </button>
             ))}
+            {visibleNodes.length === 0 ? <p className="col-span-full py-10 text-center text-sm text-stone-400">当前筛选没有节点</p> : null}
           </div>
         </main>
 
@@ -114,6 +170,8 @@ export default function MathFineGraphSample() {
                   <code className="mt-1 block break-all text-[10px] text-stone-400">{selected.id}</code>
                 </div>
               </div>
+
+              {selectedThemes.length ? <div className="mt-3 flex flex-wrap gap-1.5">{selectedThemes.map((item) => <span key={item.id} className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black text-violet-700">{item.label}</span>)}</div> : null}
 
               <div className="mt-4 rounded-2xl bg-stone-50 p-4">
                 <div className="text-xs font-black text-stone-400">原始属性摘录</div>
