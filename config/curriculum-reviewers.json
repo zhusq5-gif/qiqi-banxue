@@ -1,0 +1,5 @@
+{
+  "schema": "qiqi-curriculum-trusted-reviewers/v1",
+  "reviewers": {},
+  "note": "受信审核者必须由维护者在线下核验后登记 Ed25519 公钥。仓库不得保存任何审核者私钥，也不会自动认定教师/专家资格。"
+}
