@@ -1,0 +1,199 @@
+{
+  "datasetVersion": "2022-evidence-v0.1",
+  "status": "research_only",
+  "scopeNote": "仅收录可从教育部公开来源核验的课标元数据与少量样板条款。官方证据核验不等于知识点映射已通过教研审核。",
+  "documents": [
+    {
+      "id": "moe-cn-2022",
+      "subject": "chinese",
+      "title": "义务教育语文课程标准（2022年版）",
+      "authority": "中华人民共和国教育部",
+      "versionYear": 2022,
+      "effectiveFrom": "2022-09",
+      "verificationStatus": "official_source_verified",
+      "sourceUrl": "https://www.moe.gov.cn/srcsite/A26/s8001/202204/t20220420_619921.html",
+      "sourceNote": "教育部教材〔2022〕2号通知将语文课程标准列为附件，并明确2022年秋季学期开始执行。"
+    },
+    {
+      "id": "moe-en-2022",
+      "subject": "english",
+      "title": "义务教育英语课程标准（2022年版）",
+      "authority": "中华人民共和国教育部",
+      "versionYear": 2022,
+      "effectiveFrom": "2022-09",
+      "verificationStatus": "official_source_verified",
+      "sourceUrl": "https://www.moe.gov.cn/srcsite/A26/s8001/202204/t20220420_619921.html",
+      "sourceNote": "教育部教材〔2022〕2号通知将英语课程标准列为附件，并明确2022年秋季学期开始执行。"
+    }
+  ],
+  "clauses": [
+    {
+      "id": "cn-core-competencies",
+      "documentId": "moe-cn-2022",
+      "subject": "chinese",
+      "kind": "core_competency",
+      "title": "语文课程核心素养四方面",
+      "stage": "义务教育全学段",
+      "grades": [1,2,3,4,5,6,7,8,9],
+      "evidenceSummary": "教育部公开解读明确，语文课程重点培养文化自信、语言运用、思维能力和审美创造四方面核心素养。",
+      "sourceUrl": "https://www.moe.gov.cn/jyb_xwfb/s271/202204/t20220421_620066.html",
+      "sourceLocator": "教育部教材局负责人答记者问，第9问",
+      "evidenceStatus": "official_source_verified",
+      "mappingPolicy": "可作为能力框架上位条款，不应直接替代具体学段目标。"
+    },
+    {
+      "id": "cn-practice-domains",
+      "documentId": "moe-cn-2022",
+      "subject": "chinese",
+      "kind": "content_area",
+      "title": "语文实践活动基本领域",
+      "stage": "义务教育全学段",
+      "grades": [1,2,3,4,5,6,7,8,9],
+      "evidenceSummary": "教育部新闻发布会解读将识字与写字、阅读与鉴赏、表达与交流、梳理与探究作为语文实践活动的基本要求。",
+      "sourceUrl": "https://www.moe.gov.cn/fbh/live/2022/54382/twwd/202204/t20220421_620224.html",
+      "sourceLocator": "2022-04-21 新闻发布会图文直播，申继亮发言",
+      "evidenceStatus": "official_source_verified",
+      "mappingPolicy": "适合用于节点分类和上位领域挂接；具体知识点仍需结合正式课标条款人工复核。"
+    },
+    {
+      "id": "cn-writing-stage-1",
+      "documentId": "moe-cn-2022",
+      "subject": "chinese",
+      "kind": "stage_goal",
+      "title": "1—2年级书写要求",
+      "stage": "第一学段",
+      "grades": [1,2],
+      "evidenceSummary": "教育部公开答复概括2022版语文课标：1—2年级学生应进行基本汉字书写学习。",
+      "sourceUrl": "https://www.moe.gov.cn/jyb_xxgk/xxgk_jyta/jyta_jiaocaiju/202501/t20250113_1175495.html",
+      "sourceLocator": "对十四届全国人大二次会议第4162号建议的答复，明确课程要求部分",
+      "evidenceStatus": "official_source_verified",
+      "mappingPolicy": "可与低年级写字、笔顺、字形结构等教材出现记录建立 supporting 候选映射。"
+    },
+    {
+      "id": "cn-writing-stage-2",
+      "documentId": "moe-cn-2022",
+      "subject": "chinese",
+      "kind": "stage_goal",
+      "title": "3—4年级书写要求",
+      "stage": "第二学段",
+      "grades": [3,4],
+      "evidenceSummary": "教育部公开答复概括2022版语文课标：3—4年级强调硬笔正楷熟练书写，并开始毛笔正楷临摹。",
+      "sourceUrl": "https://www.moe.gov.cn/jyb_xxgk/xxgk_jyta/jyta_jiaocaiju/202501/t20250113_1175495.html",
+      "sourceLocator": "对十四届全国人大二次会议第4162号建议的答复，明确课程要求部分",
+      "evidenceStatus": "official_source_verified",
+      "mappingPolicy": "仅作为学段书写要求；教材节点需核对是否真正承担书写训练。"
+    },
+    {
+      "id": "cn-writing-stage-3",
+      "documentId": "moe-cn-2022",
+      "subject": "chinese",
+      "kind": "stage_goal",
+      "title": "5—6年级书写要求",
+      "stage": "第三学段",
+      "grades": [5,6],
+      "evidenceSummary": "教育部公开答复概括2022版语文课标：5—6年级继续硬笔楷书书写，并提出毛笔楷书书写要求。",
+      "sourceUrl": "https://www.moe.gov.cn/jyb_xxgk/xxgk_jyta/jyta_jiaocaiju/202501/t20250113_1175495.html",
+      "sourceLocator": "对十四届全国人大二次会议第4162号建议的答复，明确课程要求部分",
+      "evidenceStatus": "official_source_verified",
+      "mappingPolicy": "仅作为学段书写要求；与书法赏析类节点不能自动视为直接对应。"
+    },
+    {
+      "id": "en-core-competencies",
+      "documentId": "moe-en-2022",
+      "subject": "english",
+      "kind": "core_competency",
+      "title": "英语课程核心素养四方面",
+      "stage": "义务教育全学段",
+      "grades": [3,4,5,6,7,8,9],
+      "evidenceSummary": "教育部公开答复明确，义务教育外语课程着力发展语言能力、文化意识、思维品质和学习能力等核心素养。",
+      "sourceUrl": "https://www.moe.gov.cn/jyb_xxgk/xxgk_jyta/jyta_jiaocaiju/202209/t20220923_664174.html",
+      "sourceLocator": "对十三届全国人大五次会议第9010号建议的答复，第二部分第1点",
+      "evidenceStatus": "official_source_verified",
+      "mappingPolicy": "作为英语能力框架上位条款；单个词汇、句型节点只能建立 supporting 候选映射。"
+    },
+    {
+      "id": "en-cross-cultural-goal",
+      "documentId": "moe-en-2022",
+      "subject": "english",
+      "kind": "course_goal",
+      "title": "中国情怀、国际视野与跨文化沟通",
+      "stage": "义务教育全学段",
+      "grades": [3,4,5,6,7,8,9],
+      "evidenceSummary": "教育部公开答复指出，外语课程还应培养学生的中国情怀、国际视野和跨文化沟通能力。",
+      "sourceUrl": "https://www.moe.gov.cn/jyb_xxgk/xxgk_jyta/jyta_jiaocaiju/202209/t20220923_664174.html",
+      "sourceLocator": "对十三届全国人大五次会议第9010号建议的答复，第二部分第1点",
+      "evidenceStatus": "official_source_verified",
+      "mappingPolicy": "适合映射文化与交际类学习任务，不用于给纯词汇节点强行贴文化目标。"
+    },
+    {
+      "id": "all-stage-progression",
+      "documentId": "moe-cn-2022",
+      "subject": "chinese",
+      "kind": "implementation_principle",
+      "title": "学习目标连续性与进阶性",
+      "stage": "义务教育全学段",
+      "grades": [1,2,3,4,5,6,7,8,9],
+      "evidenceSummary": "教育部课程标准答记者问强调，小学到初中要体现学习目标的连续性和进阶性，并随学生发展调整课程深度与广度。",
+      "sourceUrl": "https://www.moe.gov.cn/jyb_xwfb/s271/202204/t20220421_620066.html",
+      "sourceLocator": "教育部教材局负责人答记者问，第10问",
+      "evidenceStatus": "official_source_verified",
+      "mappingPolicy": "这是建模原则，不直接等于任意两个相似名称节点之间存在先修关系。"
+    }
+  ],
+  "mappings": [
+    {
+      "id": "map-cn-g1-writing-1",
+      "entryId": "provisional:csf:chinese:g1:s1:u2:k4",
+      "clauseId": "cn-writing-stage-1",
+      "relation": "supports",
+      "confidence": 0.94,
+      "status": "candidate_review",
+      "rationale": "田字格与基本笔顺属于低年级汉字书写训练的基础支撑，但仍需教研确认颗粒度是否适合直接挂接。"
+    },
+    {
+      "id": "map-cn-g1-writing-2",
+      "entryId": "provisional:csf:chinese:g1:s2:u4:k2",
+      "clauseId": "cn-writing-stage-1",
+      "relation": "supports",
+      "confidence": 0.92,
+      "status": "candidate_review",
+      "rationale": "点画书写规则服务于低年级汉字规范书写，属于 supporting 而非课标原文直接同义。"
+    },
+    {
+      "id": "map-cn-g1-practice-1",
+      "entryId": "provisional:csf:chinese:g1:s1:u3:k2",
+      "clauseId": "cn-practice-domains",
+      "relation": "contextual",
+      "confidence": 0.75,
+      "status": "candidate_review",
+      "rationale": "拼读活动可纳入语言文字实践，但该节点本身存在已登记数据质量问题，映射保持候选。"
+    },
+    {
+      "id": "map-en-g3-language-1",
+      "entryId": "provisional:csf:english:g3:s1:u1:k1",
+      "clauseId": "en-core-competencies",
+      "relation": "supports",
+      "confidence": 0.88,
+      "status": "candidate_review",
+      "rationale": "问候与自我介绍属于语言能力的教材任务实例，但核心素养条款是上位要求。"
+    },
+    {
+      "id": "map-en-g3-culture-1",
+      "entryId": "provisional:csf:english:g3:s1:u2:k1",
+      "clauseId": "en-cross-cultural-goal",
+      "relation": "supports",
+      "confidence": 0.8,
+      "status": "candidate_review",
+      "rationale": "介绍他人与社交礼仪具有交际和文化意识支撑价值，但不能据此宣称已达到跨文化沟通目标。"
+    },
+    {
+      "id": "map-en-g3-culture-2",
+      "entryId": "provisional:csf:english:g3:s2:u1:k1",
+      "clauseId": "en-cross-cultural-goal",
+      "relation": "supports",
+      "confidence": 0.82,
+      "status": "candidate_review",
+      "rationale": "来源地交流任务可支撑跨文化沟通能力培养，具体学业要求仍待正式课标条款级补录。"
+    }
+  ]
+}
