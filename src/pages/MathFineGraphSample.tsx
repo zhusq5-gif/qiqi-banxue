@@ -68,6 +68,13 @@ export default function MathFineGraphSample() {
     if (preferred) setSelectedId(preferred.id)
   }
 
+  function chooseStage(themeId: MathFineThemeId, anchorId: string) {
+    setTheme(themeId)
+    setLabel('all')
+    setQuery('')
+    if (mathFineNodeById(anchorId)) setSelectedId(anchorId)
+  }
+
   return (
     <div className="mx-auto min-h-full max-w-7xl px-4 pb-20 pt-5">
       <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -75,12 +82,13 @@ export default function MathFineGraphSample() {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-black text-stone-900">小学数学细粒度原始子图</h1>
             <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-black text-sky-700">Concept / Skill / Exercise</span>
-            <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black text-violet-700">3 个主题</span>
+            <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-black text-violet-700">跨年级样板</span>
             <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-700">research_only</span>
           </div>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-stone-500">{mathFineSample.scope}。本页直接截取 K12-KGraph `subject_specific_KG/math.json` 的可定位原始节点与关系，不经过 benchmark 关系转译。</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link to="/knowledge-map/math-sample/normalized" className="rounded-full bg-violet-600 px-4 py-2 text-sm font-black text-white">统一 Schema 视图</Link>
           <Link to="/knowledge-map/math-sample" className="rounded-full bg-white px-4 py-2 text-sm font-black text-stone-700 shadow">返回数学样板</Link>
           <Link to="/knowledge-map" className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">知识地图</Link>
         </div>
@@ -89,7 +97,7 @@ export default function MathFineGraphSample() {
       <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-6">
         {[
           ['原始节点', mathFineSample.nodes.length],
-          ['主题', mathFineSample.themes.length],
+          ['进阶轨道', mathFineSample.progressions.length],
           ['Concept', mathFineSample.nodes.filter((item) => item.label === 'Concept').length],
           ['Skill', mathFineSample.nodes.filter((item) => item.label === 'Skill').length],
           ['Exercise', mathFineSample.nodes.filter((item) => item.label === 'Exercise').length],
@@ -106,24 +114,51 @@ export default function MathFineGraphSample() {
         {mathFineSample.themes.map((item) => {
           const nodes = mathFineNodesForTheme(item.id)
           const themeEdges = mathFineEdgesForTheme(item.id)
-          const chapterNames = item.chapterIds.map((id) => mathFineNodeById(id)?.name ?? id).join('、')
           const active = theme === item.id
           return (
             <button key={item.id} type="button" onClick={() => chooseTheme(item.id)} className={`rounded-3xl border p-4 text-left transition ${active ? 'border-violet-300 bg-violet-50 shadow-sm' : 'border-stone-100 bg-white hover:border-stone-200'}`}>
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-sm font-black text-stone-900">{item.label}</div>
-                <span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-black text-stone-500">{item.grade}年级{item.semester === 1 ? '上' : '下'}</span>
-              </div>
-              <div className="mt-1 text-xs font-bold text-violet-700">{chapterNames}</div>
+              <div className="text-sm font-black text-stone-900">{item.label}</div>
               <p className="mt-2 text-xs leading-5 text-stone-500">{item.description}</p>
-              <div className="mt-3 text-[11px] font-black text-stone-400">{nodes.length} 节点 · {themeEdges.length} 边</div>
+              <div className="mt-3 text-[11px] font-black text-stone-400">{item.chapterIds.length} 个章节锚点 · {nodes.length} 节点 · {themeEdges.length} 边</div>
             </button>
           )
         })}
       </section>
 
+      <section className="mt-4 rounded-3xl bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="text-base font-black text-stone-900">跨年级课程序列</h2>
+            <p className="mt-1 text-xs leading-5 text-stone-500">箭头只表示教材阶段顺序。只有下方节点详情中实际存在的 K12-KGraph raw edge 才具有 prerequisite / relates_to / is_a 语义。</p>
+          </div>
+          <span className="text-[11px] font-black text-rose-600">research_sequence ≠ prerequisite</span>
+        </div>
+        <div className="mt-4 space-y-3">
+          {mathFineSample.progressions.map((progression) => (
+            <article key={progression.id} className="rounded-2xl border border-violet-100 bg-violet-50/40 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-sm font-black text-stone-900">{progression.label}</div>
+                <div className="text-[10px] font-black text-violet-600">raw evidence edges {progression.formalRawEdgeIds.length}</div>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {progression.stages.map((stage, index) => (
+                  <div key={`${progression.id}-${stage.chapterId}`} className="contents">
+                    {index > 0 ? <span className="font-black text-violet-300">→</span> : null}
+                    <button type="button" onClick={() => chooseStage(progression.themeId, stage.anchorIds[0])} className="rounded-2xl border border-violet-100 bg-white px-3 py-2 text-left hover:border-violet-300">
+                      <div className="text-[10px] font-black text-violet-600">{stage.grade}年级{stage.semester === 1 ? '上' : '下'}</div>
+                      <div className="mt-0.5 text-xs font-black text-stone-800">{stage.label}</div>
+                      <div className="mt-1 text-[10px] text-stone-400">{stage.anchorIds.length} 个锚点</div>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-xs leading-5 text-rose-700">
-        数据许可：<strong>{mathFineSample.source.license}</strong>。当前不能作为商业正式知识库直接再分发；本页仅用于数据模型、关系类型和 UI 研究。主题标签是本系统为浏览而增加的本地元数据，节点 ID、属性和边类型保持原始 provenance。
+        数据许可：<strong>{mathFineSample.source.license}</strong>。当前不能作为商业正式知识库直接再分发；主题与 progression 标签是本系统为浏览增加的研究元数据，节点 ID、属性、sourceLocator 和 raw edge 类型保持原始 provenance。
       </div>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -163,12 +198,10 @@ export default function MathFineGraphSample() {
         <aside className="rounded-3xl bg-white p-5 shadow lg:sticky lg:top-4 lg:self-start">
           {selected ? (
             <>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${labelClass[selected.label]}`}>{labelText[selected.label]}</span>
-                  <h2 className="mt-2 text-xl font-black leading-7 text-stone-900">{selected.name}</h2>
-                  <code className="mt-1 block break-all text-[10px] text-stone-400">{selected.id}</code>
-                </div>
+              <div>
+                <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${labelClass[selected.label]}`}>{labelText[selected.label]}</span>
+                <h2 className="mt-2 text-xl font-black leading-7 text-stone-900">{selected.name}</h2>
+                <code className="mt-1 block break-all text-[10px] text-stone-400">{selected.id}</code>
               </div>
 
               {selectedThemes.length ? <div className="mt-3 flex flex-wrap gap-1.5">{selectedThemes.map((item) => <span key={item.id} className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black text-violet-700">{item.label}</span>)}</div> : null}
@@ -182,7 +215,7 @@ export default function MathFineGraphSample() {
               </div>
 
               <section className="mt-4">
-                <div className="flex items-center justify-between"><h3 className="text-sm font-black text-stone-800">直接关系</h3><span className="text-xs font-bold text-stone-400">{edges.length}</span></div>
+                <div className="flex items-center justify-between"><h3 className="text-sm font-black text-stone-800">直接 raw 关系</h3><span className="text-xs font-bold text-stone-400">{edges.length}</span></div>
                 <div className="mt-2 max-h-[430px] space-y-2 overflow-y-auto pr-1">
                   {edges.map((edge) => {
                     const outbound = edge.source === selected.id
