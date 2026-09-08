@@ -3,7 +3,7 @@
 ## 1. 项目脚手架与基础设施
 
 - [x] 1.1 用 Vite 初始化 React + TypeScript 项目，安装 Tailwind CSS，配置触控友好的基础样式，验证 `npm run dev` 启动且浏览器正常渲染（build 通过 + dev 服务器 HTML/模块 200 冒烟通过，2026-08-27）
-- [ ] 1.2 配置 vite-plugin-pwa（manifest、图标、应用壳缓存），验证 Chrome DevTools → Application → Manifest 无报错（代码侧已确认：manifest.webmanifest 生成完整、standalone/start_url=/、图标 180/192/512 尺寸正确，构建 8 条 precache；待 chester Chrome DevTools 人工核验）
+- [x] 1.2 配置 vite-plugin-pwa（manifest、图标、应用壳缓存），验证 Chrome DevTools → Application → Manifest 无报错（AI 程序化核验等价通过 2026-09-08：真实浏览器加载线上页面，SW 注册成功 scope=根路径且 activated；manifest 200 + JSON 可解析 + 字段完整（standalone/start_url=/、图标 192+512）；构建 8 条 precache。观察项：EdgeOne 返回 .webmanifest 的 content-type 为 application/octet-stream，Chrome 可安装性判定不含 MIME 类型要求，不影响安装，仅记录）
 - [x] 1.3 建立 `src/{pages,components,lib,content,assets}` 目录结构与路由骨架（login / onboarding / today / parent），验证未登录访问 `/today` 重定向到 `/login`（App 级会话门控：未登录时任意路径均呈现登录界面，等价重定向，2026-08-27）
 
 ## 2. CloudBase 数据层
