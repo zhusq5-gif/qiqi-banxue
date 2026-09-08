@@ -6,8 +6,13 @@ on:
       - 'src/pages/KnowledgeMap.tsx'
       - 'src/pages/CurriculumReview.tsx'
       - 'src/pages/CurriculumStandards.tsx'
+      - 'src/pages/StandardMappingReview.tsx'
       - 'src/components/curriculum/**'
       - 'src/content/curriculum/**'
+      - 'config/curriculum-reviewers.json'
+      - 'approvals/curriculum-standard-approvals.json'
+      - 'scripts/curriculum-standard-gate.mjs'
+      - 'scripts/sign-curriculum-standard-review.mjs'
       - 'src/App.tsx'
       - 'openspec/changes/curriculum-knowledge-map/**'
       - '.github/workflows/curriculum-knowledge-ci.yml'
@@ -18,8 +23,13 @@ on:
       - 'src/pages/KnowledgeMap.tsx'
       - 'src/pages/CurriculumReview.tsx'
       - 'src/pages/CurriculumStandards.tsx'
+      - 'src/pages/StandardMappingReview.tsx'
       - 'src/components/curriculum/**'
       - 'src/content/curriculum/**'
+      - 'config/curriculum-reviewers.json'
+      - 'approvals/curriculum-standard-approvals.json'
+      - 'scripts/curriculum-standard-gate.mjs'
+      - 'scripts/sign-curriculum-standard-review.mjs'
       - 'src/App.tsx'
       - 'openspec/changes/curriculum-knowledge-map/**'
       - '.github/workflows/curriculum-knowledge-ci.yml'
@@ -37,3 +47,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test -- --passWithNoTests
+      - name: Verify Ed25519 gate implementation
+        run: node scripts/curriculum-standard-gate.mjs --self-test
+      - name: Confirm official standard mapping export is still blocked
+        run: node scripts/curriculum-standard-gate.mjs --expect-blocked
