@@ -1,0 +1,51 @@
+{
+  "datasetVersion": "k12-kgraph-math-sample-v0.1",
+  "status": "research_only",
+  "subject": "math",
+  "title": "K12-KGraph 小学数学关系样板",
+  "source": {
+    "dataset": "lhpku20010120/K12-KGraph",
+    "datasetUrl": "https://huggingface.co/datasets/lhpku20010120/K12-KGraph",
+    "benchmarkCommitUrl": "https://huggingface.co/datasets/lhpku20010120/K12-KGraph/commit/26eb742ecc4f156516d7a05acb79764284f997cc",
+    "booksUrl": "https://github.com/haolpku/K12-KGraph/blob/main/books.yaml",
+    "license": "CC BY-NC-SA 4.0",
+    "commercialUse": false,
+    "note": "样板只摘录公开 K12-Bench prereq_subtask2 中可直接核验的小学数学章节与基础关系，以及 books.yaml 中小学人教版册次范围。它不是完整 math.json 的替代品。"
+  },
+  "bookCoverage": [
+    {"externalId":"math_1a_rjb","grade":1,"semester":1,"title":"一年级上册","publisher":"人教版"},
+    {"externalId":"math_1b_rjb","grade":1,"semester":2,"title":"一年级下册","publisher":"人教版"},
+    {"externalId":"math_2a_rjb","grade":2,"semester":1,"title":"二年级上册","publisher":"人教版"},
+    {"externalId":"math_2b_rjb","grade":2,"semester":2,"title":"二年级下册","publisher":"人教版"},
+    {"externalId":"math_3a_rjb","grade":3,"semester":1,"title":"三年级上册","publisher":"人教版"},
+    {"externalId":"math_3b_rjb","grade":3,"semester":2,"title":"三年级下册","publisher":"人教版"},
+    {"externalId":"math_4a_rjb","grade":4,"semester":1,"title":"四年级上册","publisher":"人教版"},
+    {"externalId":"math_4b_rjb","grade":4,"semester":2,"title":"四年级下册","publisher":"人教版"},
+    {"externalId":"math_5a_rjb","grade":5,"semester":1,"title":"五年级上册","publisher":"人教版"},
+    {"externalId":"math_5b_rjb","grade":5,"semester":2,"title":"五年级下册","publisher":"人教版"},
+    {"externalId":"math_6a_rjb","grade":6,"semester":1,"title":"六年级上册","publisher":"人教版"},
+    {"externalId":"math_6b_rjb","grade":6,"semester":2,"title":"六年级下册","publisher":"人教版"}
+  ],
+  "chapters": [
+    {"id":"math_3a_rjb_ch3","bookId":"math_3a_rjb","grade":3,"semester":1,"chapterNumber":3,"title":"测量"},
+    {"id":"math_3a_rjb_ch7","bookId":"math_3a_rjb","grade":3,"semester":1,"chapterNumber":7,"title":"长方形和正方形"},
+    {"id":"math_4a_rjb_ch2","bookId":"math_4a_rjb","grade":4,"semester":1,"chapterNumber":2,"title":"公顷和平方千米"},
+    {"id":"math_4a_rjb_ch3","bookId":"math_4a_rjb","grade":4,"semester":1,"chapterNumber":3,"title":"角的度量"},
+    {"id":"math_4a_rjb_ch5","bookId":"math_4a_rjb","grade":4,"semester":1,"chapterNumber":5,"title":"平行四边形和梯形"},
+    {"id":"math_4b_rjb_ch5","bookId":"math_4b_rjb","grade":4,"semester":2,"chapterNumber":5,"title":"三角形"},
+    {"id":"math_5b_rjb_ch3","bookId":"math_5b_rjb","grade":5,"semester":2,"chapterNumber":3,"title":"长方体和正方体"},
+    {"id":"math_6b_rjb_ch3","bookId":"math_6b_rjb","grade":6,"semester":2,"chapterNumber":3,"title":"圆柱与圆锥"}
+  ],
+  "prerequisiteEvidence": [
+    {"id":"math-pr-001","targetChapterId":"math_3a_rjb_ch3","fromLabel":"克和千克","fromExternalId":null,"relation":"benchmark_prerequisite","sourceTaskId":"task5::subtask2::math_3a_rjb_ch3","evidence":"K12-Bench answer A+B：克和千克、长度单位被标为‘测量’的基础。"},
+    {"id":"math-pr-002","targetChapterId":"math_3a_rjb_ch3","fromLabel":"长度单位","fromExternalId":null,"relation":"benchmark_prerequisite","sourceTaskId":"task5::subtask2::math_3a_rjb_ch3","evidence":"K12-Bench answer A+B：克和千克、长度单位被标为‘测量’的基础。"},
+    {"id":"math-pr-003","targetChapterId":"math_3a_rjb_ch7","fromLabel":"认识图形（二）","fromExternalId":null,"relation":"benchmark_prerequisite","sourceTaskId":"task5::subtask2::math_3a_rjb_ch7","evidence":"K12-Bench answer C：认识图形（二）被标为‘长方形和正方形’的基础。"},
+    {"id":"math-pr-004","targetChapterId":"math_4a_rjb_ch2","fromLabel":"面积","fromExternalId":null,"relation":"benchmark_prerequisite","sourceTaskId":"task5::subtask2::math_4a_rjb_ch2","evidence":"K12-Bench answer A：面积被标为‘公顷和平方千米’的基础。"},
+    {"id":"math-pr-005","targetChapterId":"math_4a_rjb_ch3","fromLabel":"长度单位","fromExternalId":null,"relation":"benchmark_prerequisite","sourceTaskId":"task5::subtask2::math_4a_rjb_ch3","evidence":"K12-Bench answer B+D：长度单位、角的初步认识被标为‘角的度量’的基础。"},
+    {"id":"math-pr-006","targetChapterId":"math_4a_rjb_ch3","fromLabel":"角的初步认识","fromExternalId":null,"relation":"benchmark_prerequisite","sourceTaskId":"task5::subtask2::math_4a_rjb_ch3","evidence":"K12-Bench answer B+D：长度单位、角的初步认识被标为‘角的度量’的基础。"},
+    {"id":"math-pr-007","targetChapterId":"math_4a_rjb_ch5","fromLabel":"认识图形（二）","fromExternalId":null,"relation":"benchmark_prerequisite","sourceTaskId":"task5::subtask2::math_4a_rjb_ch5","evidence":"K12-Bench answer A：认识图形（二）被标为‘平行四边形和梯形’的基础。"},
+    {"id":"math-pr-008","targetChapterId":"math_4b_rjb_ch5","fromLabel":"认识图形（二）","fromExternalId":null,"relation":"benchmark_prerequisite","sourceTaskId":"task5::subtask2::math_4b_rjb_ch5","evidence":"K12-Bench answer D：认识图形（二）被标为‘三角形’的基础。"},
+    {"id":"math-pr-009","targetChapterId":"math_5b_rjb_ch3","fromLabel":"认识图形（一）","fromExternalId":null,"relation":"benchmark_prerequisite","sourceTaskId":"task5::subtask2::math_5b_rjb_ch3","evidence":"K12-Bench answer B：认识图形（一）被标为‘长方体和正方体’的基础。"},
+    {"id":"math-pr-010","targetChapterId":"math_6b_rjb_ch3","fromLabel":"认识图形（一）","fromExternalId":null,"relation":"benchmark_prerequisite","sourceTaskId":"task5::subtask2::math_6b_rjb_ch3","evidence":"K12-Bench answer A：认识图形（一）被标为‘圆柱与圆锥’的基础。"}
+  ]
+}
