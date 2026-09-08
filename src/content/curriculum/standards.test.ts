@@ -10,8 +10,8 @@ describe('2022 curriculum standards evidence scaffold', () => {
   it('keeps the expanded verified evidence baseline stable', () => {
     expect(curriculumStandards.status).toBe('research_only')
     expect(curriculumStandards.documents).toHaveLength(3)
-    expect(curriculumStandards.clauses).toHaveLength(17)
-    expect(curriculumStandards.mappings).toHaveLength(24)
+    expect(curriculumStandards.clauses).toHaveLength(26)
+    expect(curriculumStandards.mappings).toHaveLength(60)
   })
 
   it('keeps standard entity ids unique and references resolvable', () => {
@@ -81,6 +81,35 @@ describe('2022 curriculum standards evidence scaffold', () => {
       'en-core-learning-ability',
     ]) {
       expect(standardClauseById(id), id).not.toBeNull()
+    }
+  })
+
+  it('registers all six Chinese learning task groups as official interpretation evidence', () => {
+    for (const id of [
+      'cn-task-language-accumulation',
+      'cn-task-practical-reading-communication',
+      'cn-task-literary-reading-creative-expression',
+      'cn-task-critical-reading-expression',
+      'cn-task-whole-book-reading',
+      'cn-task-cross-disciplinary',
+    ]) {
+      const clause = standardClauseById(id)
+      expect(clause, id).not.toBeNull()
+      expect(clause?.kind).toBe('learning_task_group')
+      expect(clause?.evidenceScope).toBe('official_interpretation')
+    }
+  })
+
+  it('keeps English experience-practice-transfer records at pedagogical-principle scope', () => {
+    for (const id of [
+      'en-activity-experience-learning',
+      'en-activity-practice-use',
+      'en-activity-transfer-innovation',
+    ]) {
+      const clause = standardClauseById(id)
+      expect(clause, id).not.toBeNull()
+      expect(clause?.kind).toBe('implementation_principle')
+      expect(clause?.evidenceScope).toBe('pedagogical_principle')
     }
   })
 
