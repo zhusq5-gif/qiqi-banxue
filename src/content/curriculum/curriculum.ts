@@ -97,6 +97,11 @@ export interface CurriculumSeed {
 
 export const curriculumSeed = rawSeed as CurriculumSeed
 
+const entryIndex = new Map(curriculumSeed.entries.map((entry) => [entry.id, entry]))
+const textbookIndex = new Map(curriculumSeed.textbooks.map((book) => [book.id, book]))
+const unitIndex = new Map(curriculumSeed.units.map((unit) => [unit.id, unit]))
+const issueIndex = new Map(curriculumSeed.issues.map((issue) => [issue.nodeId, issue]))
+
 export const subjectLabels: Record<CurriculumSubject, string> = {
   chinese: '语文',
   english: '英语',
@@ -107,5 +112,43 @@ export function semesterLabel(value: number) {
 }
 
 export function entryById(id: string) {
-  return curriculumSeed.entries.find((entry) => entry.id === id) ?? null
+  return entryIndex.get(id) ?? null
+}
+
+export function textbookById(id: string) {
+  return textbookIndex.get(id) ?? null
+}
+
+export function unitById(id: string) {
+  return unitIndex.get(id) ?? null
+}
+
+export function issueForEntry(id: string) {
+  return issueIndex.get(id) ?? null
+}
+
+export function textbooksForSubject(subject: CurriculumSubject) {
+  return curriculumSeed.textbooks
+    .filter((book) => book.subject === subject)
+    .toSorted((a, b) => a.grade - b.grade || a.semester - b.semester)
+}
+
+export function unitsForTextbook(textbookId: string) {
+  return curriculumSeed.units
+    .filter((unit) => unit.textbookId === textbookId)
+    .toSorted((a, b) => a.number - b.number)
+}
+
+export function entriesForTextbook(textbookId: string) {
+  return curriculumSeed.entries.filter((entry) => entry.textbookId === textbookId)
+}
+
+export function entriesForUnit(unitId: string) {
+  return curriculumSeed.entries.filter((entry) => entry.unitId === unitId)
+}
+
+export function candidatesForEntry(entryId: string) {
+  return curriculumSeed.candidates.filter(
+    (candidate) => candidate.fromId === entryId || candidate.toId === entryId,
+  )
 }
