@@ -5,6 +5,8 @@ on:
     paths:
       - 'src/pages/KnowledgeMap.tsx'
       - 'src/pages/CurriculumReview.tsx'
+      - 'src/pages/CurriculumStandards.tsx'
+      - 'src/components/curriculum/**'
       - 'src/content/curriculum/**'
       - 'src/App.tsx'
       - 'openspec/changes/curriculum-knowledge-map/**'
@@ -15,6 +17,8 @@ on:
     paths:
       - 'src/pages/KnowledgeMap.tsx'
       - 'src/pages/CurriculumReview.tsx'
+      - 'src/pages/CurriculumStandards.tsx'
+      - 'src/components/curriculum/**'
       - 'src/content/curriculum/**'
       - 'src/App.tsx'
       - 'openspec/changes/curriculum-knowledge-map/**'
