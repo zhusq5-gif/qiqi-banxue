@@ -38,9 +38,10 @@ export default function CurriculumStandards() {
   const selectedClause = standardClauseById(selectedClauseId)
   const selectedDocument = selectedClause ? standardDocumentById(selectedClause.documentId) : null
   const mappings = selectedClause ? standardMappingsForClause(selectedClause.id) : []
-  const grades = subject === 'chinese' ? [1, 2, 3, 4, 5, 6] : [3, 4, 5, 6]
+  const grades = subject === 'chinese' ? [1, 2, 3, 4, 5, 6] : subject === 'english' ? [3, 4, 5, 6] : [1, 2, 3, 4, 5, 6]
 
   function chooseSubject(next: CurriculumSubject) {
+    if (next === 'math') return
     const nextClause = standardClausesForSubject(next)[0]
     setSubject(next)
     setGrade(0)
@@ -60,6 +61,7 @@ export default function CurriculumStandards() {
           <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-500">{curriculumStandards.scopeNote}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link to="/knowledge-map/math-sample" className="rounded-full bg-sky-100 px-4 py-2 text-sm font-black text-sky-700">数学真实样板</Link>
           <Link to="/knowledge-map/standards/review" className="rounded-full bg-violet-100 px-4 py-2 text-sm font-black text-violet-700">映射审核队列 · {curriculumStandards.mappings.length}</Link>
           <Link to="/knowledge-map" className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">返回知识地图</Link>
           <Link to="/knowledge-map/review" className="rounded-full bg-white px-4 py-2 text-sm font-black text-stone-700 shadow">内容修订</Link>
@@ -81,7 +83,7 @@ export default function CurriculumStandards() {
       </section>
 
       <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
-        “教育部来源已核”只说明证据来源和摘要已核对。知识点 → 课标条款仍统一为 <strong>candidate_review</strong>；人工审核草稿也不能直接升级正式状态，必须通过仓库外私钥签名和 CI 验签门禁。
+        “教育部来源已核”只说明证据来源和摘要已核对。知识点 → 课标条款仍统一为 <strong>candidate_review</strong>；人工审核草稿也不能直接升级正式状态，必须通过仓库外私钥签名和 CI 验签门禁。数学目前只登记正式标准文档元数据，具体数学条款仍保持为空。
       </div>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
