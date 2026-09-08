@@ -19,10 +19,11 @@ function sha256Hex(value) {
 
 function loadStandards() {
   const base = readJson('src/content/curriculum/curriculum-standards-v2022.json')
-  const expansion = readJson('src/content/curriculum/curriculum-standards-expansion-v01.json')
+  const expansion1 = readJson('src/content/curriculum/curriculum-standards-expansion-v01.json')
+  const expansion2 = readJson('src/content/curriculum/curriculum-standards-expansion-v02.json')
   return {
-    clauses: [...base.clauses, ...expansion.clauses],
-    mappings: [...base.mappings, ...expansion.mappings],
+    clauses: [...base.clauses, ...expansion1.clauses, ...expansion2.clauses],
+    mappings: [...base.mappings, ...expansion1.mappings, ...expansion2.mappings],
   }
 }
 
