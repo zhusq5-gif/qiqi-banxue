@@ -7,6 +7,7 @@ import {
   standardClausesForSubject,
   standardDocumentById,
   standardMappingsForClause,
+  type StandardEvidenceScope,
 } from '../content/curriculum/standards'
 
 const kindLabels: Record<string, string> = {
@@ -14,9 +15,20 @@ const kindLabels: Record<string, string> = {
   core_competency_detail: '核心素养分项',
   content_area: '内容领域',
   content_theme: '内容主题',
+  learning_task_group: '学习任务群',
   stage_goal: '学段目标',
   course_goal: '课程目标',
   implementation_principle: '实施原则',
+}
+
+const scopeLabels: Record<StandardEvidenceScope, string> = {
+  standard_document: '课标正文',
+  official_interpretation: '官方解读',
+  pedagogical_principle: '教学实施原则',
+}
+
+function evidenceScopeLabel(scope?: StandardEvidenceScope) {
+  return scope ? scopeLabels[scope] : '官方公开证据'
 }
 
 export default function CurriculumStandards() {
@@ -31,7 +43,7 @@ export default function CurriculumStandards() {
     return standardClausesForSubject(subject).filter((item) => {
       if (grade && !item.grades.includes(grade)) return false
       if (!q) return true
-      return `${item.title} ${item.stage} ${item.evidenceSummary} ${kindLabels[item.kind] ?? item.kind}`.toLowerCase().includes(q)
+      return `${item.title} ${item.stage} ${item.evidenceSummary} ${kindLabels[item.kind] ?? item.kind} ${evidenceScopeLabel(item.evidenceScope)}`.toLowerCase().includes(q)
     })
   }, [grade, query, subject])
 
@@ -71,7 +83,7 @@ export default function CurriculumStandards() {
       <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
         {[
           ['标准文档', curriculumStandards.documents.length],
-          ['证据条款', curriculumStandards.clauses.length],
+          ['证据记录', curriculumStandards.clauses.length],
           ['候选映射', curriculumStandards.mappings.length],
           ['受信签名', 0],
         ].map(([label, value]) => (
@@ -83,7 +95,7 @@ export default function CurriculumStandards() {
       </section>
 
       <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
-        “教育部来源已核”只说明证据来源和摘要已核对。知识点 → 课标条款仍统一为 <strong>candidate_review</strong>；人工审核草稿也不能直接升级正式状态，必须通过仓库外私钥签名和 CI 验签门禁。数学目前只登记正式标准文档元数据，具体数学条款仍保持为空。
+        “教育部来源已核”只说明证据来源和摘要已核对。页面进一步区分 <strong>官方解读</strong> 与 <strong>教学实施原则</strong>；后者不能冒充具体课标学段条款。知识点映射仍统一为 <strong>candidate_review</strong>，必须经过真人审核和签名门禁。
       </div>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -99,13 +111,16 @@ export default function CurriculumStandards() {
             <button type="button" onClick={() => setGrade(0)} className={`rounded-full px-3 py-1.5 text-xs font-bold ${grade === 0 ? 'bg-stone-900 text-white' : 'bg-white text-stone-500'}`}>全年级</button>
             {grades.map((value) => <button key={value} type="button" onClick={() => setGrade(value)} className={`rounded-full px-3 py-1.5 text-xs font-bold ${grade === value ? 'bg-stone-900 text-white' : 'bg-white text-stone-500'}`}>{value}年级</button>)}
           </div>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索条款或证据摘要" className="mt-3 h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm outline-none focus:border-amber-400" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索条款、任务群或证据摘要" className="mt-3 h-10 w-full rounded-xl border border-stone-200 bg-white px-3 text-sm outline-none focus:border-amber-400" />
           <div className="mt-3 max-h-[650px] space-y-2 overflow-y-auto pr-1">
             {clauses.map((item) => (
               <button key={item.id} type="button" onClick={() => setSelectedClauseId(item.id)} className={`w-full rounded-2xl border p-3 text-left ${item.id === selectedClauseId ? 'border-amber-300 bg-amber-50' : 'border-stone-100 bg-white'}`}>
-                <div className="text-[11px] font-black text-amber-700">{kindLabels[item.kind] ?? item.kind} · {item.stage}</div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-black text-amber-700">{kindLabels[item.kind] ?? item.kind}</span>
+                  <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-bold text-stone-500">{evidenceScopeLabel(item.evidenceScope)}</span>
+                </div>
                 <div className="mt-1 text-sm font-black leading-5 text-stone-900">{item.title}</div>
-                <div className="mt-1 text-[11px] text-stone-400">适用：{item.grades.filter((value) => value <= 6).join('、') || '全学段'} 年级</div>
+                <div className="mt-1 text-[11px] text-stone-400">{item.stage} · 适用 {item.grades.filter((value) => value <= 6).join('、') || '全学段'} 年级</div>
               </button>
             ))}
             {clauses.length === 0 ? <p className="py-8 text-center text-sm text-stone-400">没有匹配条款</p> : null}
@@ -117,10 +132,14 @@ export default function CurriculumStandards() {
             <>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-xs font-black text-amber-600">{kindLabels[selectedClause.kind] ?? selectedClause.kind} · {selectedClause.stage}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-black text-amber-600">{kindLabels[selectedClause.kind] ?? selectedClause.kind}</span>
+                    <span className="rounded-full bg-stone-100 px-2.5 py-1 text-[11px] font-black text-stone-600">{evidenceScopeLabel(selectedClause.evidenceScope)}</span>
+                  </div>
                   <h2 className="mt-1 text-xl font-black text-stone-900">{selectedClause.title}</h2>
+                  <p className="mt-1 text-xs text-stone-400">{selectedClause.stage}</p>
                 </div>
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">证据已核</span>
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">证据来源已核</span>
               </div>
 
               <div className="mt-5 rounded-2xl bg-stone-50 p-4">
@@ -130,7 +149,7 @@ export default function CurriculumStandards() {
 
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <div className="rounded-2xl border border-stone-100 p-4">
-                  <div className="text-xs font-black text-stone-400">标准文档</div>
+                  <div className="text-xs font-black text-stone-400">关联标准文档</div>
                   <div className="mt-2 text-sm font-black text-stone-800">{selectedDocument?.title}</div>
                   <div className="mt-1 text-xs leading-5 text-stone-500">{selectedDocument?.authority} · {selectedDocument?.versionYear} · {selectedDocument?.effectiveFrom} 起执行</div>
                 </div>
