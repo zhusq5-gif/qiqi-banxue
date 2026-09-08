@@ -1,7 +1,13 @@
 import fs from 'node:fs'
 import crypto from 'node:crypto'
 
-const args = new Set(process.argv.slice(2))
+const cliArgs = process.argv.slice(2)
+const args = new Set(cliArgs)
+
+function argValue(prefix) {
+  const raw = cliArgs.find((item) => item.startsWith(`${prefix}=`))
+  return raw ? raw.slice(prefix.length + 1) : null
+}
 
 function readJson(path) {
   return JSON.parse(fs.readFileSync(path, 'utf8'))
@@ -152,6 +158,15 @@ const report = {
   note: 'This gate covers curriculum-standard mapping signatures only. Whole-system official release still requires textbook edition, rights and content-issue gates.',
 }
 console.log(JSON.stringify(report, null, 2))
+
+const expectedCandidateRaw = argValue('--expect-candidate-count')
+if (expectedCandidateRaw !== null) {
+  const expectedCandidateCount = Number(expectedCandidateRaw)
+  if (!Number.isInteger(expectedCandidateCount) || report.candidateMappings !== expectedCandidateCount) {
+    console.error(`Candidate mapping count mismatch: expected ${expectedCandidateRaw}, got ${report.candidateMappings}`)
+    process.exit(3)
+  }
+}
 
 if (args.has('--require-ready')) process.exit(report.readyForOfficialAlignmentExport ? 0 : 2)
 if (args.has('--expect-blocked')) process.exit(report.readyForOfficialAlignmentExport ? 2 : 0)
