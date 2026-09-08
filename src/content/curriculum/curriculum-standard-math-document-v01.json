@@ -1,0 +1,17 @@
+{
+  "datasetVersion": "2022-math-document-v0.1",
+  "status": "research_only",
+  "documents": [
+    {
+      "id": "moe-math-2022",
+      "subject": "math",
+      "title": "义务教育数学课程标准（2022年版）",
+      "authority": "中华人民共和国教育部",
+      "versionYear": 2022,
+      "effectiveFrom": "2022-09",
+      "verificationStatus": "official_source_verified",
+      "sourceUrl": "https://www.moe.gov.cn/srcsite/A26/s8001/202204/t20220420_619921.html",
+      "sourceNote": "教育部教材〔2022〕2号通知将数学课程标准列为附件，并明确2022年秋季学期开始执行。当前仅登记标准文档元数据，尚未录入数学具体条款。"
+    }
+  ]
+}
