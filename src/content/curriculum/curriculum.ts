@@ -130,13 +130,15 @@ export function issueForEntry(id: string) {
 export function textbooksForSubject(subject: CurriculumSubject) {
   return curriculumSeed.textbooks
     .filter((book) => book.subject === subject)
-    .toSorted((a, b) => a.grade - b.grade || a.semester - b.semester)
+    .slice()
+    .sort((a, b) => a.grade - b.grade || a.semester - b.semester)
 }
 
 export function unitsForTextbook(textbookId: string) {
   return curriculumSeed.units
     .filter((unit) => unit.textbookId === textbookId)
-    .toSorted((a, b) => a.number - b.number)
+    .slice()
+    .sort((a, b) => a.number - b.number)
 }
 
 export function entriesForTextbook(textbookId: string) {
