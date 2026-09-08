@@ -1,9 +1,14 @@
 import rawFineSample from './math-fine-sample-v01.json'
 import rawFineExpansion from './math-fine-sample-expansion-v02.json'
+import rawFineProgression from './math-fine-progression-v03.json'
+import rawFineFractions from './math-fine-fractions-v03.json'
+import rawFineGeometry from './math-fine-geometry-v03.json'
+import rawFineStatistics from './math-fine-statistics-v03.json'
 
 export type MathFineNodeLabel = 'Chapter' | 'Concept' | 'Skill' | 'Exercise'
 export type MathFineEdgeType = 'relates_to' | 'prerequisites_for' | 'is_a' | 'appears_in' | 'tests_concept' | 'tests_skill'
 export type MathFineThemeId = 'number_algebra' | 'geometry' | 'statistics_probability'
+export type MathFineProgressionStatus = 'research_sequence'
 
 export interface MathFineNode {
   id: string
@@ -33,6 +38,25 @@ export interface MathFineTheme {
   description: string
 }
 
+export interface MathFineProgressionStage {
+  grade: number
+  semester: 1 | 2
+  bookId: string
+  chapterId: string
+  label: string
+  anchorIds: string[]
+}
+
+export interface MathFineProgression {
+  id: string
+  themeId: MathFineThemeId
+  label: string
+  status: MathFineProgressionStatus
+  note: string
+  stages: MathFineProgressionStage[]
+  formalRawEdgeIds: string[]
+}
+
 export interface MathFineSample {
   datasetVersion: string
   status: 'research_only'
@@ -48,11 +72,12 @@ export interface MathFineSample {
     note: string
   }
   themes: MathFineTheme[]
+  progressions: MathFineProgression[]
   nodes: MathFineNode[]
   edges: MathFineEdge[]
 }
 
-type MathFineBase = Omit<MathFineSample, 'themes'>
+type MathFineBase = Omit<MathFineSample, 'themes' | 'progressions'>
 type MathFineExpansion = {
   datasetVersion: string
   status: 'research_only'
@@ -62,24 +87,62 @@ type MathFineExpansion = {
   nodes: MathFineNode[]
   edges: MathFineEdge[]
 }
+type MathFineProgressionExpansion = {
+  datasetVersion: string
+  status: 'research_only'
+  subject: 'math'
+  scopeNote: string
+  themes: MathFineTheme[]
+  progressions: MathFineProgression[]
+}
+type MathFineRawExpansion = {
+  datasetVersion: string
+  status: 'research_only'
+  subject: 'math'
+  nodes: MathFineNode[]
+  edges: MathFineEdge[]
+}
 
 const base = rawFineSample as MathFineBase
 const expansion = rawFineExpansion as MathFineExpansion
+const progression = rawFineProgression as MathFineProgressionExpansion
+const fractionExpansion = rawFineFractions as MathFineRawExpansion
+const geometryExpansion = rawFineGeometry as MathFineRawExpansion
+const statisticsExpansion = rawFineStatistics as MathFineRawExpansion
 
 export const mathFineSample: MathFineSample = {
   ...base,
-  datasetVersion: `${base.datasetVersion}+${expansion.datasetVersion}`,
-  scope: `${base.scope}；${expansion.scopeNote}`,
-  themes: expansion.themes,
-  nodes: [...base.nodes, ...expansion.nodes],
-  edges: [...base.edges, ...expansion.edges],
+  datasetVersion: `${base.datasetVersion}+${expansion.datasetVersion}+${progression.datasetVersion}`,
+  scope: `${base.scope}；${expansion.scopeNote}；${progression.scopeNote}`,
+  themes: progression.themes,
+  progressions: progression.progressions,
+  nodes: [
+    ...base.nodes,
+    ...expansion.nodes,
+    ...fractionExpansion.nodes,
+    ...geometryExpansion.nodes,
+    ...statisticsExpansion.nodes,
+  ],
+  edges: [
+    ...base.edges,
+    ...expansion.edges,
+    ...fractionExpansion.edges,
+    ...geometryExpansion.edges,
+    ...statisticsExpansion.edges,
+  ],
 }
 
 const nodeIndex = new Map(mathFineSample.nodes.map((node) => [node.id, node]))
+const edgeIndex = new Map(mathFineSample.edges.map((edge) => [edge.id, edge]))
 const themeIndex = new Map(mathFineSample.themes.map((theme) => [theme.id, theme]))
+const progressionIndex = new Map(mathFineSample.progressions.map((item) => [item.id, item]))
 
 export function mathFineNodeById(id: string) {
   return nodeIndex.get(id) ?? null
+}
+
+export function mathFineEdgeById(id: string) {
+  return edgeIndex.get(id) ?? null
 }
 
 export function mathFineNodesByLabel(label: MathFineNodeLabel) {
@@ -96,6 +159,14 @@ export function mathFineEdgesByType(type: MathFineEdgeType) {
 
 export function mathFineThemeById(id: MathFineThemeId) {
   return themeIndex.get(id) ?? null
+}
+
+export function mathFineProgressionById(id: string) {
+  return progressionIndex.get(id) ?? null
+}
+
+export function mathFineProgressionsForTheme(id: MathFineThemeId) {
+  return mathFineSample.progressions.filter((item) => item.themeId === id)
 }
 
 export function mathFineNodesForTheme(id: MathFineThemeId) {
