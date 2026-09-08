@@ -4,8 +4,10 @@
 
 ## 怎么跑起来
 
-P1 开发中，尚无可运行代码。脚手架就绪后：`npm run dev`（Vite + React 18 + TS）。
+`npm run dev`（Vite + React 18 + TS），构建 `npm run build`，测试 `npm test`（vitest）。
 云后端：CloudBase 环境 `zhusiqi-knowledge-base-dbb4abd2f`（个人版，PG 模式，勿用 NoSQL API）。
+线上（预览）：https://qiqi-banxue-xpnba4ki.edgeone.cool（EdgeOne Makers 项目 qiqi-banxue，已可匿名访问）。
+正式域名（配置中）：`qiqi.77xiaomiao.cn` → EdgeOne Pages 绑定，已加入 CloudBase 安全域名（2026-09-06）。
 
 ## 技术栈与关键约定
 
@@ -14,7 +16,7 @@ P1 开发中，尚无可运行代码。脚手架就绪后：`npm run dev`（Vite
 - 认证：js-sdk v3（supabase-like）；会话用 `auth.getSession()`，登录用 `auth.signInWithPassword`；勿用 getLoginState/getUser
 - 日期：一律 Asia/Shanghai 时区 `YYYY-MM-DD`
 - 星星余额 = star_ledger 聚合，不冗余存储；打卡幂等靠 checkins(subject_id, date) 唯一约束
-- 部署：EdgeOne Pages（GitHub 自动构建）；GitHub 写入用 gh CLI 凭证 + git push（MCP 只读）
+- 部署：EdgeOne Makers（deploy_folder 上传 dist/ 产物，实测无 GitHub 自动构建绑定）；GitHub 写入用 gh CLI 凭证 + git push（MCP 只读）
 
 ## 目录与工作流
 
@@ -24,9 +26,11 @@ P1 开发中，尚无可运行代码。脚手架就绪后：`npm run dev`（Vite
 
 ## 当前状态与下一步
 
-- P1「打卡核心」已批准实现：task 2.1 完成（建表+RLS+SMTP），下一步 task 1.1 脚手架
+- P1「打卡核心」实现 19/22：全量代码已上线 EdgeOne 并通过线上 E2E（注册→打卡→兑换→导出，2026-08-28）；4.2/4.4/5.2/6.3 经代码核对确认已实现（2026-09-08）
+- 剩余 3 项均为人工验收：1.2（DevTools manifest 核验）、2.3（双账号 RLS，需第二测试账号）、7.2（iPad 真机验收，建议用正式域名）
+- 正式域名上线三步（2026-09-06 起）：① CloudBase 安全域名已加 qiqi.77xiaomiao.cn ✅ ② EdgeOne 控制台绑定自定义域名+免费证书（chester 操作）③ DNSPod 加 CNAME（绑定弹窗给值）
 - 详细任务清单见 `openspec/changes/p1-checkin-core/tasks.md`
-- CloudBase 试用期至 2026-09-25（自动续费，约 19.9 元/月）
+- CloudBase 试用期至 2026-09-25（自动续费，约 19.9 元/月）；ICP 备案已完成（2026-09-06 确认）
 
 ## 硬性红线
 
