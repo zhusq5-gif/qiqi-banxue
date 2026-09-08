@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { mathFineSample } from '../content/curriculum/mathFineSample'
 import { mathBookById, mathPrerequisitesForChapter, mathResearchSample } from '../content/curriculum/mathSample'
 import { standardDocumentsForSubject } from '../content/curriculum/standards'
 
@@ -27,19 +28,21 @@ export default function MathResearchSample() {
             <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-black text-sky-700">K12-KGraph / K12-Bench</span>
             <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-700">非商业研究</span>
           </div>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-500">本页只展示能够从 K12-KGraph 公开发布与 K12-Bench 公开提交中直接核验的小学数学章节和基础关系证据。未确认的前置章节 ID 保持为空，不做教材章节号推断。</p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-500">章级区域保留 K12-Bench 基础关系证据；新增加的细粒度入口则直接读取 K12-KGraph `subject_specific_KG/math.json` 的 Concept / Skill / Exercise 原始子图，两种证据不会混写。</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link to="/knowledge-map/math-sample/fine" className="rounded-full bg-sky-600 px-4 py-2 text-sm font-black text-white">细粒度原始子图 · {mathFineSample.nodes.length}</Link>
           <Link to="/knowledge-map/standards" className="rounded-full bg-white px-4 py-2 text-sm font-black text-stone-700 shadow">2022 课标证据</Link>
           <Link to="/knowledge-map" className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">返回知识地图</Link>
         </div>
       </header>
 
-      <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
+      <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-5">
         {[
           ['小学册次范围', mathResearchSample.bookCoverage.length],
           ['样板目标章节', mathResearchSample.chapters.length],
-          ['基础关系证据', mathResearchSample.prerequisiteEvidence.length],
+          ['Benchmark关系', mathResearchSample.prerequisiteEvidence.length],
+          ['原始细粒度节点', mathFineSample.nodes.length],
           ['数学课标文档', mathStandard ? 1 : 0],
         ].map(([label, value]) => (
           <div key={label} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
@@ -49,11 +52,16 @@ export default function MathResearchSample() {
         ))}
       </section>
 
-      <section className="mt-4 grid gap-3 md:grid-cols-2">
+      <section className="mt-4 grid gap-3 md:grid-cols-3">
         <article className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
           <div className="text-xs font-black text-rose-700">数据许可</div>
           <div className="mt-1 text-sm font-black text-stone-900">{mathResearchSample.source.license}</div>
-          <p className="mt-2 text-xs leading-5 text-rose-700">`NC` 表示当前样板不能作为商业正式数据直接再分发。系统因此强制保持 research_only / commercialUse=false。</p>
+          <p className="mt-2 text-xs leading-5 text-rose-700">`NC` 表示当前样板不能作为商业正式数据直接再分发。系统强制保持 research_only / commercialUse=false。</p>
+        </article>
+        <article className="rounded-2xl border border-sky-100 bg-sky-50 p-4">
+          <div className="text-xs font-black text-sky-700">原始细粒度子图</div>
+          <div className="mt-1 text-sm font-black text-stone-900">{mathFineSample.nodes.length} 节点 / {mathFineSample.edges.length} 关系</div>
+          <p className="mt-2 text-xs leading-5 text-sky-700">直接保留 Concept、Skill、Exercise、Chapter 与原始关系类型，可验证“知识—技能—练习—教材位置”链路。</p>
         </article>
         <article className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
           <div className="text-xs font-black text-emerald-700">2022 数学课标</div>
