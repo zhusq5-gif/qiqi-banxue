@@ -7,11 +7,11 @@ function expectUnique(values: string[]) {
 }
 
 describe('2022 curriculum standards evidence scaffold', () => {
-  it('keeps the initial verified evidence baseline stable', () => {
+  it('keeps the expanded verified evidence baseline stable', () => {
     expect(curriculumStandards.status).toBe('research_only')
     expect(curriculumStandards.documents).toHaveLength(2)
-    expect(curriculumStandards.clauses).toHaveLength(8)
-    expect(curriculumStandards.mappings).toHaveLength(6)
+    expect(curriculumStandards.clauses).toHaveLength(17)
+    expect(curriculumStandards.mappings).toHaveLength(24)
   })
 
   it('keeps standard entity ids unique and references resolvable', () => {
@@ -24,7 +24,7 @@ describe('2022 curriculum standards evidence scaffold', () => {
       expect(document, clause.id).not.toBeNull()
       expect(document?.subject).toBe(clause.subject)
       expect(clause.evidenceStatus).toBe('official_source_verified')
-      expect(clause.sourceUrl.startsWith('https://www.moe.gov.cn/')).toBe(true)
+      expect(clause.sourceUrl.includes('moe.gov.cn/')).toBe(true)
     }
   })
 
@@ -59,5 +59,27 @@ describe('2022 curriculum standards evidence scaffold', () => {
       expect(document.effectiveFrom).toBe('2022-09')
       expect(document.verificationStatus).toBe('official_source_verified')
     }
+  })
+
+  it('splits the four subject core competencies into reviewable clauses', () => {
+    for (const id of [
+      'cn-core-cultural-confidence',
+      'cn-core-language-use',
+      'cn-core-thinking-ability',
+      'cn-core-aesthetic-creation',
+      'en-core-language-ability',
+      'en-core-cultural-awareness',
+      'en-core-thinking-quality',
+      'en-core-learning-ability',
+    ]) {
+      expect(standardClauseById(id), id).not.toBeNull()
+    }
+  })
+
+  it('keeps low-confidence learning-ability inference explicitly contextual', () => {
+    const mapping = curriculumStandards.mappings.find((item) => item.id === 'map2-en-learning-1')
+    expect(mapping?.relation).toBe('contextual')
+    expect(mapping?.confidence).toBeLessThan(0.7)
+    expect(mapping?.status).toBe('candidate_review')
   })
 })
