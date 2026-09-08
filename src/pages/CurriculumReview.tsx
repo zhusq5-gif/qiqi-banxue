@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import StandardEvidencePanel from '../components/curriculum/StandardEvidencePanel'
 import { curriculumSeed, entryById, semesterLabel, subjectLabels } from '../content/curriculum/curriculum'
 
 type RevisionDraft = {
@@ -118,7 +119,10 @@ export default function CurriculumReview() {
           </div>
           <p className="mt-2 text-sm leading-6 text-stone-500">修订仅保存在当前浏览器的版本化本地草稿层，不覆盖种子 JSON，不写 CloudBase，也不会生成专家审核状态。</p>
         </div>
-        <Link to="/knowledge-map" className="self-start rounded-full bg-white px-4 py-2 text-sm font-bold text-stone-700 shadow md:self-auto">返回知识地图</Link>
+        <div className="flex flex-wrap gap-2 self-start md:self-auto">
+          <Link to="/knowledge-map/standards" className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-emerald-700">2022 课标证据</Link>
+          <Link to="/knowledge-map" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-stone-700 shadow">返回知识地图</Link>
+        </div>
       </header>
 
       <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
@@ -173,6 +177,8 @@ export default function CurriculumReview() {
                   <div className="mt-3 text-[11px] leading-5 text-stone-400"><div>{entry.sourcePath}</div><div>{entry.sourcePointer}</div></div>
                 </div>
               </section>
+
+              <StandardEvidencePanel entryId={entry.id} />
 
               <section className="mt-5 rounded-2xl border border-amber-100 bg-amber-50/50 p-4">
                 <div className="flex items-center justify-between gap-3">
