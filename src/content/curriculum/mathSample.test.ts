@@ -13,7 +13,7 @@ describe('K12-KGraph primary math research sample', () => {
     expect(mathResearchSample.bookCoverage).toHaveLength(12)
     expect(new Set(mathResearchSample.bookCoverage.map((item) => item.externalId)).size).toBe(12)
     expect(mathResearchSample.bookCoverage[0]?.externalId).toBe('math_1a_rjb')
-    expect(mathResearchSample.bookCoverage.at(-1)?.externalId).toBe('math_6b_rjb')
+    expect(mathResearchSample.bookCoverage[mathResearchSample.bookCoverage.length - 1]?.externalId).toBe('math_6b_rjb')
   })
 
   it('keeps every sample chapter attached to a declared book', () => {
