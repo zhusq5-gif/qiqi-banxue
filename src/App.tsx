@@ -5,6 +5,7 @@ import Onboarding from './pages/Onboarding'
 import Today from './pages/Today'
 import Parent from './pages/Parent'
 import KnowledgeMap from './pages/KnowledgeMap'
+import CurriculumReview from './pages/CurriculumReview'
 import { getProfile, getSessionUser, type Profile } from './lib/cloudbase'
 
 type AppState = 'loading' | 'login' | 'onboarding' | 'ready'
@@ -53,6 +54,7 @@ export default function App() {
         element={<Parent profile={profile!} onProfileChange={setProfile} onLogout={bootstrap} />}
       />
       <Route path="/knowledge-map" element={<KnowledgeMap />} />
+      <Route path="/knowledge-map/review" element={<CurriculumReview />} />
       <Route path="*" element={<Navigate to="/today" replace />} />
     </Routes>
   )
