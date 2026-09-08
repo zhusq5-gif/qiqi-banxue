@@ -12,6 +12,7 @@ const CurriculumStandards = lazy(() => import('./pages/CurriculumStandards'))
 const StandardMappingReview = lazy(() => import('./pages/StandardMappingReview'))
 const MathResearchSample = lazy(() => import('./pages/MathResearchSample'))
 const MathFineGraphSample = lazy(() => import('./pages/MathFineGraphSample'))
+const MathNormalizedSample = lazy(() => import('./pages/MathNormalizedSample'))
 
 type AppState = 'loading' | 'login' | 'onboarding' | 'ready'
 
@@ -73,6 +74,7 @@ export default function App() {
         <Route path="/knowledge-map/standards/review" element={<StandardMappingReview />} />
         <Route path="/knowledge-map/math-sample" element={<MathResearchSample />} />
         <Route path="/knowledge-map/math-sample/fine" element={<MathFineGraphSample />} />
+        <Route path="/knowledge-map/math-sample/normalized" element={<MathNormalizedSample />} />
         <Route path="*" element={<Navigate to="/today" replace />} />
       </Routes>
     </Suspense>
