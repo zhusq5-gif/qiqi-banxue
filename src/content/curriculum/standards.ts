@@ -1,5 +1,6 @@
 import rawStandards from './curriculum-standards-v2022.json'
 import rawExpansion from './curriculum-standards-expansion-v01.json'
+import rawMathDocument from './curriculum-standard-math-document-v01.json'
 import type { CurriculumSubject } from './curriculum'
 
 export type StandardEvidenceStatus = 'official_source_verified'
@@ -56,14 +57,21 @@ type CurriculumStandardsExpansion = Pick<CurriculumStandardsDataset, 'status' | 
   datasetVersion: string
 }
 
+type CurriculumStandardDocumentExpansion = {
+  datasetVersion: string
+  status: 'research_only'
+  documents: CurriculumStandardDocument[]
+}
+
 const base = rawStandards as CurriculumStandardsDataset
 const expansion = rawExpansion as CurriculumStandardsExpansion
+const mathDocument = rawMathDocument as CurriculumStandardDocumentExpansion
 
 export const curriculumStandards: CurriculumStandardsDataset = {
-  datasetVersion: `${base.datasetVersion}+${expansion.datasetVersion}`,
+  datasetVersion: `${base.datasetVersion}+${expansion.datasetVersion}+${mathDocument.datasetVersion}`,
   status: 'research_only',
-  scopeNote: `${base.scopeNote} ${expansion.scopeNote}`,
-  documents: base.documents,
+  scopeNote: `${base.scopeNote} ${expansion.scopeNote} 数学当前只登记2022版标准文档元数据，具体条款尚待可核证据结构化。`,
+  documents: [...base.documents, ...mathDocument.documents],
   clauses: [...base.clauses, ...expansion.clauses],
   mappings: [...base.mappings, ...expansion.mappings],
 }
@@ -78,6 +86,10 @@ export function standardClauseById(id: string) {
 
 export function standardMappingById(id: string) {
   return curriculumStandards.mappings.find((item) => item.id === id) ?? null
+}
+
+export function standardDocumentsForSubject(subject: CurriculumSubject) {
+  return curriculumStandards.documents.filter((item) => item.subject === subject)
 }
 
 export function standardClausesForSubject(subject: CurriculumSubject) {
