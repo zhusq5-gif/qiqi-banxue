@@ -1,6 +1,6 @@
 import rawSeed from './curriculum-seed-v02.json'
 
-export type CurriculumSubject = 'chinese' | 'english'
+export type CurriculumSubject = 'chinese' | 'english' | 'math'
 export type CurriculumView = 'textbook' | 'knowledge' | 'relations'
 
 export interface CurriculumEntry {
@@ -105,6 +105,7 @@ const issueIndex = new Map(curriculumSeed.issues.map((issue) => [issue.nodeId, i
 export const subjectLabels: Record<CurriculumSubject, string> = {
   chinese: '语文',
   english: '英语',
+  math: '数学',
 }
 
 export function semesterLabel(value: number) {
