@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'src/pages/KnowledgeMap.tsx'
+      - 'src/pages/CurriculumReview.tsx'
       - 'src/content/curriculum/**'
       - 'src/App.tsx'
       - 'openspec/changes/curriculum-knowledge-map/**'
@@ -13,6 +14,7 @@ on:
       - feat/curriculum-knowledge-v03
     paths:
       - 'src/pages/KnowledgeMap.tsx'
+      - 'src/pages/CurriculumReview.tsx'
       - 'src/content/curriculum/**'
       - 'src/App.tsx'
       - 'openspec/changes/curriculum-knowledge-map/**'
