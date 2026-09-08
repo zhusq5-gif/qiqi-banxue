@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import StandardEvidencePanel from '../components/curriculum/StandardEvidencePanel'
 import {
   candidatesForEntry,
   curriculumSeed,
@@ -216,6 +217,7 @@ export default function KnowledgeMap() {
         <div className="flex flex-wrap gap-2 self-start md:self-auto">
           <button type="button" onClick={exportJson} className="rounded-full bg-stone-100 px-4 py-2 text-sm font-black text-stone-700">导出 JSON</button>
           <button type="button" onClick={exportHtml} className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">导出离线 HTML</button>
+          <Link to="/knowledge-map/standards" className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-emerald-700">2022 课标证据</Link>
           <Link to="/knowledge-map/review" className="rounded-full bg-rose-100 px-4 py-2 text-sm font-black text-rose-700">修订工作台 · {stats.issues}</Link>
           <Link to="/parent" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-stone-700 shadow active:scale-95">返回家长视图</Link>
         </div>
@@ -239,7 +241,7 @@ export default function KnowledgeMap() {
 
       <div className="mb-4 flex items-start gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-xs leading-5 text-rose-700">
         <span className="font-black">正式发布阻断：</span>
-        <span>教材版次、课标条款、内容权利和专家审核尚未全部完成。当前页面用于研究、审校与数据建模。</span>
+        <span>教材版次、课标全量条款映射、内容权利和专家审核尚未全部完成。当前页面用于研究、审校与数据建模。</span>
       </div>
 
       <section className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)_320px]">
@@ -335,6 +337,8 @@ export default function KnowledgeMap() {
                   <p className="mt-2 text-xs leading-5 text-rose-600">处理建议：{selectedIssue.disposition}</p>
                 </div>
               ) : null}
+
+              <StandardEvidencePanel entryId={selectedEntry.id} />
 
               <div className="mt-4 rounded-2xl border border-violet-100 p-4">
                 <div className="flex items-center justify-between"><span className="text-xs font-black text-violet-700">关系候选</span><span className="text-xs text-violet-400">{selectedCandidates.length}</span></div>
