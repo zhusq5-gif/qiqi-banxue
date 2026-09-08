@@ -189,7 +189,10 @@ export default function KnowledgeMap() {
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-500">{curriculumSeed.scopeNote}</p>
         </div>
-        <Link to="/parent" className="self-start rounded-full bg-white px-4 py-2 text-sm font-bold text-stone-700 shadow active:scale-95 md:self-auto">返回家长视图</Link>
+        <div className="flex flex-wrap gap-2 self-start md:self-auto">
+          <Link to="/knowledge-map/review" className="rounded-full bg-rose-100 px-4 py-2 text-sm font-black text-rose-700">修订工作台 · {stats.issues}</Link>
+          <Link to="/parent" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-stone-700 shadow active:scale-95">返回家长视图</Link>
+        </div>
       </header>
 
       <section className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-6">
@@ -298,7 +301,10 @@ export default function KnowledgeMap() {
 
               {selectedIssue ? (
                 <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 p-4">
-                  <div className="text-xs font-black text-rose-700">已登记问题 · {selectedIssue.code}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-black text-rose-700">已登记问题 · {selectedIssue.code}</div>
+                    <Link to="/knowledge-map/review" className="text-[11px] font-black text-rose-600 underline">进入修订</Link>
+                  </div>
                   <p className="mt-2 text-sm leading-6 text-rose-800">{selectedIssue.finding}</p>
                   <p className="mt-2 text-xs leading-5 text-rose-600">处理建议：{selectedIssue.disposition}</p>
                 </div>
