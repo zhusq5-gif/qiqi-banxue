@@ -4,14 +4,16 @@ import { entryById, subjectLabels, type CurriculumSubject } from '../content/cur
 import {
   curriculumStandards,
   standardClauseById,
+  standardClausesForSubject,
   standardDocumentById,
   standardMappingsForClause,
-  standardClausesForSubject,
 } from '../content/curriculum/standards'
 
 const kindLabels: Record<string, string> = {
   core_competency: '核心素养',
+  core_competency_detail: '核心素养分项',
   content_area: '内容领域',
+  content_theme: '内容主题',
   stage_goal: '学段目标',
   course_goal: '课程目标',
   implementation_principle: '实施原则',
@@ -52,23 +54,24 @@ export default function CurriculumStandards() {
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-black text-stone-900">2022 课标证据库</h1>
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">官方来源已核</span>
+            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">教育部来源已核</span>
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700">映射仍待教研</span>
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-500">{curriculumStandards.scopeNote}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link to="/knowledge-map/standards/review" className="rounded-full bg-violet-100 px-4 py-2 text-sm font-black text-violet-700">映射审核队列 · {curriculumStandards.mappings.length}</Link>
           <Link to="/knowledge-map" className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">返回知识地图</Link>
-          <Link to="/knowledge-map/review" className="rounded-full bg-white px-4 py-2 text-sm font-black text-stone-700 shadow">修订工作台</Link>
+          <Link to="/knowledge-map/review" className="rounded-full bg-white px-4 py-2 text-sm font-black text-stone-700 shadow">内容修订</Link>
         </div>
       </header>
 
       <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
         {[
           ['标准文档', curriculumStandards.documents.length],
-          ['样板条款', curriculumStandards.clauses.length],
+          ['证据条款', curriculumStandards.clauses.length],
           ['候选映射', curriculumStandards.mappings.length],
-          ['正式映射', 0],
+          ['受信签名', 0],
         ].map(([label, value]) => (
           <div key={label} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
             <div className="text-2xl font-black text-stone-900">{value}</div>
@@ -78,10 +81,10 @@ export default function CurriculumStandards() {
       </section>
 
       <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
-        这里的“官方来源已核”仅表示来源页面与证据摘要来自教育部公开信息；知识点到条款的映射仍统一为 <strong>candidate_review</strong>，不会自动进入正式发布库。
+        “教育部来源已核”只说明证据来源和摘要已核对。知识点 → 课标条款仍统一为 <strong>candidate_review</strong>；人工审核草稿也不能直接升级正式状态，必须通过仓库外私钥签名和 CI 验签门禁。
       </div>
 
-      <section className="mt-4 grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <section className="mt-4 grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="rounded-3xl bg-stone-50 p-4 shadow-sm lg:sticky lg:top-4 lg:self-start">
           <div className="grid grid-cols-2 gap-2">
             {(['chinese', 'english'] as const).map((item) => (
@@ -144,7 +147,7 @@ export default function CurriculumStandards() {
               <section className="mt-5">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-black text-stone-800">知识点映射候选</h3>
-                  <span className="text-xs font-bold text-stone-400">{mappings.length} 条</span>
+                  <div className="flex items-center gap-2"><span className="text-xs font-bold text-stone-400">{mappings.length} 条</span><Link to="/knowledge-map/standards/review" className="text-xs font-black text-violet-700 underline">进入人工审核</Link></div>
                 </div>
                 <div className="mt-3 space-y-2">
                   {mappings.map((mapping) => {
@@ -157,7 +160,7 @@ export default function CurriculumStandards() {
                         </div>
                         {entry ? <div className="mt-1 text-xs text-stone-500">{entry.grade}年级 · {entry.book} · {entry.unit}</div> : null}
                         <p className="mt-2 text-xs leading-6 text-violet-800">{mapping.rationale}</p>
-                        <div className="mt-2 text-[11px] font-black text-rose-600">关系：{mapping.relation}；尚未通过学科审核者签名。</div>
+                        <div className="mt-2 text-[11px] font-black text-rose-600">关系：{mapping.relation}；尚未通过受信学科审核者签名。</div>
                       </article>
                     )
                   })}
