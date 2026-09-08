@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { entryById } from './curriculum'
-import { curriculumStandards, standardClauseById, standardDocumentById } from './standards'
+import { curriculumStandards, standardClauseById, standardDocumentById, standardDocumentsForSubject } from './standards'
 
 function expectUnique(values: string[]) {
   expect(new Set(values).size).toBe(values.length)
@@ -9,7 +9,7 @@ function expectUnique(values: string[]) {
 describe('2022 curriculum standards evidence scaffold', () => {
   it('keeps the expanded verified evidence baseline stable', () => {
     expect(curriculumStandards.status).toBe('research_only')
-    expect(curriculumStandards.documents).toHaveLength(2)
+    expect(curriculumStandards.documents).toHaveLength(3)
     expect(curriculumStandards.clauses).toHaveLength(17)
     expect(curriculumStandards.mappings).toHaveLength(24)
   })
@@ -52,13 +52,21 @@ describe('2022 curriculum standards evidence scaffold', () => {
     }
   })
 
-  it('keeps the source documents explicitly effective from the 2022 school year', () => {
+  it('keeps all official source documents explicitly effective from the 2022 school year', () => {
     for (const document of curriculumStandards.documents) {
       expect(document.authority).toBe('中华人民共和国教育部')
       expect(document.versionYear).toBe(2022)
       expect(document.effectiveFrom).toBe('2022-09')
       expect(document.verificationStatus).toBe('official_source_verified')
+      expect(document.sourceUrl.startsWith('https://www.moe.gov.cn/')).toBe(true)
     }
+  })
+
+  it('registers math standard metadata without inventing math clauses', () => {
+    expect(standardDocumentsForSubject('math')).toHaveLength(1)
+    expect(standardDocumentById('moe-math-2022')?.title).toContain('数学课程标准')
+    expect(curriculumStandards.clauses.filter((item) => item.subject === 'math')).toHaveLength(0)
+    expect(curriculumStandards.mappings.filter((item) => standardClauseById(item.clauseId)?.subject === 'math')).toHaveLength(0)
   })
 
   it('splits the four subject core competencies into reviewable clauses', () => {
