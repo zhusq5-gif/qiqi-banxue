@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import StandardEvidencePanel from '../components/curriculum/StandardEvidencePanel'
 import { curriculumSeed, entryById, semesterLabel, subjectLabels } from '../content/curriculum/curriculum'
 import { repairProposalForIssue } from '../content/curriculum/curriculumRepairProposals'
+import { createRepairRecheckBundle } from '../content/curriculum/curriculumRepairRecheck'
 import { curriculumRepairTasks } from '../content/curriculum/curriculumVerification'
 
 type RevisionDraft = {
@@ -71,6 +72,16 @@ function parseQuestionTypes(value: string) {
     .filter(Boolean)
 }
 
+function downloadJson(payload: unknown, fileName: string) {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export default function CurriculumReview() {
   const firstIssueId = curriculumSeed.issues[0]?.id ?? ''
   const [selectedIssueId, setSelectedIssueId] = useState(firstIssueId)
@@ -82,6 +93,13 @@ export default function CurriculumReview() {
   const entry = issue ? entryById(issue.nodeId) : null
   const repairTask = issue ? curriculumRepairTasks.find((task) => task.issueId === issue.id) ?? null : null
   const repairProposal = issue ? repairProposalForIssue(issue.id) : null
+  const recheckBundle = issue
+    ? createRepairRecheckBundle(issue.id, {
+        proposedLabel: draft.proposedLabel,
+        proposedLearningDemand: draft.proposedLearningDemand,
+        proposedQuestionTypes: draft.proposedQuestionTypes,
+      })
+    : null
 
   useEffect(() => {
     const stored = readStore().drafts[selectedIssueId]
@@ -110,7 +128,7 @@ export default function CurriculumReview() {
 
   function exportDraft() {
     if (!issue || !entry) return
-    const payload = {
+    downloadJson({
       schema: 'qiqi-curriculum-revision-draft/v2',
       exportedAt: new Date().toISOString(),
       status: 'draft_only',
@@ -127,14 +145,17 @@ export default function CurriculumReview() {
         sourcePointer: entry.sourcePointer,
       },
       proposed: draft,
-    }
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `curriculum-revision-${issue.id}.json`
-    link.click()
-    URL.revokeObjectURL(url)
+    }, `curriculum-revision-${issue.id}.json`)
+  }
+
+  function exportRecheck() {
+    if (!issue || !recheckBundle) return
+    downloadJson({
+      ...recheckBundle,
+      exportedAt: new Date().toISOString(),
+      reviewerNote: draft.reviewerNote,
+      warning: 'recheck_pending 仅表示候选改动通过机器差异范围检查；下一关仍是真人学科复核。',
+    }, `curriculum-recheck-${issue.id}.json`)
   }
 
   return (
@@ -156,7 +177,7 @@ export default function CurriculumReview() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
         <span className="font-black">治理提醒：</span>
-        <span>本地已保存 {savedCount} 条草稿。候选 patch 和导出的 JSON 都是 draft_only，必须经过“修补后复测 → 真人学科复核 → 发布门禁”后才能进入正式库。</span>
+        <span>本地已保存 {savedCount} 条草稿。候选 patch 和导出的 JSON 都是 draft_only；复测包通过机器范围检查后仍必须经过真人学科复核与发布门禁。</span>
       </div>
 
       <section className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -215,6 +236,18 @@ export default function CurriculumReview() {
                 </section>
               ) : null}
 
+              <section className="mt-4 rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-xs font-black text-sky-700">当前草稿复测判定</div>
+                  <span className={`rounded-full bg-white px-2.5 py-1 text-[10px] font-black ${recheckBundle?.status === 'recheck_pending' ? 'text-emerald-700' : recheckBundle?.status === 'manual_review_required' ? 'text-rose-700' : 'text-stone-500'}`}>{recheckBundle?.status ?? 'unknown'}</span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-stone-600">
+                  变更字段：{recheckBundle?.changedFields.join('、') || '无'}；允许候选范围：{recheckBundle?.allowedCandidateFields.join('、') || '无自动修补范围'}。
+                </p>
+                {recheckBundle?.unexpectedChangedFields.length ? <p className="mt-1 text-xs font-black text-rose-600">超出候选范围：{recheckBundle.unexpectedChangedFields.join('、')}，必须人工重新判断。</p> : null}
+                <p className="mt-1 text-[10px] font-black text-sky-700">recheck_pending 不是审核通过；下一关固定为 human_subject_review。</p>
+              </section>
+
               <section className="mt-5 grid gap-4 xl:grid-cols-2">
                 <div className="rounded-2xl bg-stone-50 p-4">
                   <h3 className="text-xs font-black text-stone-500">问题发现</h3>
@@ -250,6 +283,7 @@ export default function CurriculumReview() {
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button type="button" onClick={saveDraft} className="rounded-full bg-amber-500 px-4 py-2 text-sm font-black text-white">保存本地草稿</button>
                   <button type="button" onClick={exportDraft} className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">导出草稿 JSON</button>
+                  <button type="button" onClick={exportRecheck} className="rounded-full bg-sky-600 px-4 py-2 text-sm font-black text-white">导出复测包</button>
                   <button type="button" onClick={resetDraft} className="rounded-full bg-white px-4 py-2 text-sm font-bold text-stone-600 shadow-sm">恢复候选修补基线</button>
                 </div>
                 {draft.updatedAt ? <p className="mt-3 text-[11px] text-stone-400">最近本地保存：{draft.updatedAt}</p> : null}
