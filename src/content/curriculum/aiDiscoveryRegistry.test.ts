@@ -7,11 +7,11 @@ import {
 } from './aiDiscoveryRegistry'
 
 describe('aggregated AI discovery registry', () => {
-  it('combines three source-qualified batches without duplicate candidate IDs', () => {
-    expect(aiDiscoveryBatches).toHaveLength(3)
-    expect(aiDiscoveryRegistrySummary.total).toBe(53)
-    expect(aiDiscoveryRegistrySummary.chinese).toBe(26)
-    expect(aiDiscoveryRegistrySummary.english).toBe(16)
+  it('combines four source-qualified batches without duplicate candidate IDs', () => {
+    expect(aiDiscoveryBatches).toHaveLength(4)
+    expect(aiDiscoveryRegistrySummary.total).toBe(61)
+    expect(aiDiscoveryRegistrySummary.chinese).toBe(29)
+    expect(aiDiscoveryRegistrySummary.english).toBe(21)
     expect(aiDiscoveryRegistrySummary.math).toBe(11)
     expect(new Set(aiDiscoveryCandidatesAll.map((item) => item.id)).size).toBe(aiDiscoveryCandidatesAll.length)
   })
@@ -32,11 +32,12 @@ describe('aggregated AI discovery registry', () => {
     expect(versionUnknown.every((item) => item.confidence !== 'high')).toBe(true)
   })
 
-  it('adds official task-group/integrated-practice anchors without presenting them as precise textbook nodes', () => {
+  it('keeps official framework/stage anchors distinct from publisher activity candidates', () => {
     const taskGroups = aiDiscoveryCandidatesAll.filter((item) => item.id.startsWith('ai3-chinese-task-'))
     expect(taskGroups).toHaveLength(6)
     expect(taskGroups.every((item) => item.sourceAuthority === 'official_standard_2022' && item.candidateKind === 'knowledge_domain')).toBe(true)
-    expect(aiDiscoveryCandidatesAll.find((item) => item.id === 'ai3-math-integrated-practice')?.sourceAuthority).toBe('official_standard_2022')
+    expect(aiDiscoveryCandidatesAll.find((item) => item.id === 'ai4-chinese-g3-4-regular-script-writing')?.sourceAuthority).toBe('official_standard_2022')
+    expect(aiDiscoveryCandidatesAll.find((item) => item.id === 'ai4-english-g4-phonics-spelling')?.sourceAuthority).toBe('publisher_current_resource')
   })
 
   it('supports UI decision export for expansion candidates without auto-application', () => {
