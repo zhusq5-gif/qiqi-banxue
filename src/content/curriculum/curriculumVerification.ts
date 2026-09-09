@@ -11,6 +11,7 @@ export type ContentVerificationStatus =
   | 'recheck_pending'
 export type HumanVerificationStatus = 'not_started' | 'pending' | 'verified'
 export type RepairTaskStatus = 'patch_proposed' | 'queued' | 'recheck_pending' | 'verified'
+export type ItemVerificationStatus = 'automated_screened' | 'needs_patch' | 'queued' | 'recheck_pending'
 
 export interface GradeVerificationRow {
   id: string
@@ -30,6 +31,22 @@ export interface GradeVerificationRow {
   humanStatus: HumanVerificationStatus
   priorityReason: string
   nextAction: string
+}
+
+export interface KnowledgeVerificationItem {
+  id: string
+  subject: CurriculumSubject
+  grade: number
+  wave: VerificationWave
+  knowledgeId: string
+  occurrenceId: string
+  label: string
+  sourceRef: string
+  sourcePresent: boolean
+  gradeBound: boolean
+  registeredIssueIds: string[]
+  status: ItemVerificationStatus
+  humanStatus: HumanVerificationStatus
 }
 
 export interface CurriculumRepairTask {
@@ -170,6 +187,59 @@ export const curriculumGradeVerificationRows: GradeVerificationRow[] = [
   ...[1, 2, 3, 4, 5, 6].map((grade) => rowFor('math', grade)),
 ]
 
+function itemStatus(subject: CurriculumSubject, grade: number, hasIssue: boolean): ItemVerificationStatus {
+  const key = `${subject}:${grade}`
+  if (!wave1Executed.has(key)) return 'queued'
+  return hasIssue ? 'needs_patch' : 'automated_screened'
+}
+
+const textVerificationItems: KnowledgeVerificationItem[] = curriculumSeed.entries.map((entry) => {
+  const row = curriculumGradeVerificationRows.find((item) => item.subject === entry.subject && item.grade === entry.grade)
+  if (!row) throw new Error(`Missing verification row for entry ${entry.id}`)
+  const issueIds = curriculumSeed.issues.filter((issue) => issue.nodeId === entry.id).map((issue) => issue.id)
+  return {
+    id: `item:${entry.subject}:${entry.grade}:${entry.id}`,
+    subject: entry.subject,
+    grade: entry.grade,
+    wave: row.wave,
+    knowledgeId: entry.id,
+    occurrenceId: entry.id,
+    label: entry.label,
+    sourceRef: `${entry.sourcePath}#${entry.sourcePointer}`,
+    sourcePresent: Boolean(entry.sourcePath && entry.sourcePointer),
+    gradeBound: entry.grade === row.grade,
+    registeredIssueIds: issueIds,
+    status: itemStatus(entry.subject, entry.grade, issueIds.length > 0),
+    humanStatus: 'not_started',
+  }
+})
+
+const mathVerificationItems: KnowledgeVerificationItem[] = mathNormalizedDataset.occurrences.map((occurrence) => {
+  const row = curriculumGradeVerificationRows.find((item) => item.subject === 'math' && item.grade === occurrence.grade)
+  const node = mathNormalizedDataset.knowledgeNodes.find((item) => item.id === occurrence.knowledgeNodeId)
+  if (!row || !node) throw new Error(`Missing math verification endpoint for occurrence ${occurrence.id}`)
+  return {
+    id: `item:math:${occurrence.grade}:${occurrence.id}`,
+    subject: 'math',
+    grade: occurrence.grade,
+    wave: row.wave,
+    knowledgeId: node.id,
+    occurrenceId: occurrence.id,
+    label: node.canonicalName,
+    sourceRef: `${node.source.rawId}@${node.source.sourceLocator};${occurrence.rawAppearsInEdgeId}@${occurrence.source.sourceLocator}`,
+    sourcePresent: Boolean(node.source.rawId && node.source.sourceLocator && occurrence.source.rawId && occurrence.source.sourceLocator),
+    gradeBound: chapterGrade(occurrence.chapterId) === occurrence.grade,
+    registeredIssueIds: [],
+    status: itemStatus('math', occurrence.grade, false),
+    humanStatus: 'not_started',
+  }
+})
+
+export const curriculumKnowledgeVerificationItems: KnowledgeVerificationItem[] = [
+  ...textVerificationItems,
+  ...mathVerificationItems,
+]
+
 const repairActionByIssueId: Record<string, string> = {
   F001: '核对并移除/替换语文题型中的“口算”异常标签；正确题型需由语文教研确认后写回。',
   F002: '依据例词复核“ABB式”标题，当前候选修补为“AABB式词语积累”；确认后再写入发布数据。',
@@ -199,13 +269,19 @@ export const curriculumRepairTasks: CurriculumRepairTask[] = curriculumSeed.issu
 
 export const curriculumVerificationSummary = {
   rowCount: curriculumGradeVerificationRows.length,
+  itemCount: curriculumKnowledgeVerificationItems.length,
+  textItemCount: textVerificationItems.length,
+  mathOccurrenceItemCount: mathVerificationItems.length,
   automatedCheckedRows: curriculumGradeVerificationRows.length,
   wave1ExecutedRows: curriculumGradeVerificationRows.filter((row) => row.wave === 1 && wave1Executed.has(`${row.subject}:${row.grade}`)).length,
+  wave1ScreenedItems: curriculumKnowledgeVerificationItems.filter((item) => item.status === 'automated_screened' || item.status === 'needs_patch').length,
   rowsWithFindings: curriculumGradeVerificationRows.filter((row) => row.automatedStatus === 'passed_with_findings').length,
   repairTaskCount: curriculumRepairTasks.length,
   patchProposedCount: curriculumRepairTasks.filter((task) => task.status === 'patch_proposed').length,
   humanVerifiedRows: curriculumGradeVerificationRows.filter((row) => row.humanStatus === 'verified').length,
+  humanVerifiedItems: curriculumKnowledgeVerificationItems.filter((item) => item.humanStatus === 'verified').length,
   gradeVerificationReadyForOfficialRelease: curriculumGradeVerificationRows.every((row) => row.humanStatus === 'verified')
+    && curriculumKnowledgeVerificationItems.every((item) => item.humanStatus === 'verified')
     && curriculumRepairTasks.every((task) => task.status === 'verified'),
 }
 
@@ -221,7 +297,7 @@ export const curriculumVerificationPolicy = {
     '许可证/权利状态',
     '真人学科复核',
   ],
-  rule: '机器检查、修补建议与真人教研复核分层记录。任何年级未完成真人复核前，不得把该年级标记为正式已核。',
+  rule: '机器检查、修补建议与真人教研复核分层记录。任何年级或知识点未完成真人复核前，不得标记为正式已核。',
 }
 
 export function verificationRowsForSubject(subject: CurriculumSubject) {
@@ -230,6 +306,10 @@ export function verificationRowsForSubject(subject: CurriculumSubject) {
 
 export function verificationRowsForWave(wave: VerificationWave) {
   return curriculumGradeVerificationRows.filter((row) => row.wave === wave)
+}
+
+export function verificationItemsForGrade(subject: CurriculumSubject, grade: number) {
+  return curriculumKnowledgeVerificationItems.filter((item) => item.subject === subject && item.grade === grade)
 }
 
 export function repairTasksForGrade(subject: CurriculumSubject, grade: number) {
