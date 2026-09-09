@@ -42,7 +42,7 @@ describe('curriculum repair proposals', () => {
     const proposal = repairProposalForIssue('F007')!
     const original = entryById(proposal.nodeId)!
     expect(original.learningDemand).toContain('回。答')
-    expect(proposal.proposedLearningDemand).toBe(original.learningDemand.replaceAll('回。答', '回答'))
+    expect(proposal.proposedLearningDemand).toBe(original.learningDemand.split('回。答').join('回答'))
     expect(proposal.proposedLearningDemand).not.toContain('回。答')
   })
 })
