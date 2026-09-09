@@ -5,45 +5,36 @@
 
 ## 一、核心调整
 
-### 1. 真人审核改为 UI-first
-
-正常审核流程统一通过应用 UI 完成。Markdown 审核包与 JSON 模板只保留为：
-
-- 外部交接；
-- 离线备份；
-- 审计证据；
-- 第三方系统交换格式。
-
-不再把“人工编辑 JSON/Markdown”作为默认业务流程。
+正常审核流程统一通过应用 UI 完成。Markdown/JSON 只保留为外部交接、备份、审计和交换格式，不再作为默认业务流程。
 
 当前 UI 入口：
 
-- `/knowledge-map/review-center`：审核导航中枢；
-- `/knowledge-map/verification`：学科×年级核对矩阵；
+- `/knowledge-map/review-center`：审核中枢；
 - `/knowledge-map/discovery`：AI 搜索候选真人审校；
+- `/knowledge-map/discovery/domains`：学科 × 年级 × 领域搜索矩阵；
+- `/knowledge-map/human-review/ai`：AI 候选进入真人精审后的本地 case draft 队列；
+- `/knowledge-map/verification`：学科 × 年级核对矩阵；
 - `/knowledge-map/human-review`：现有内容/数学 audit 真人核对；
-- `/knowledge-map/human-review/current`：基于当前 case 的 decision v2；
+- `/knowledge-map/human-review/current`：当前 case decision v2；
 - `/knowledge-map/human-review/proposal`：结构化提案与二次回归；
 - `/knowledge-map/human-review/ingest`：历史/外部 v1 JSON 兼容入口。
 
-Review Center v1 已完成导航收敛；下一步是进一步把队列、当前 case、decision 和 structured proposal 合并成更连续的单页审校体验，而不是要求审核者理解内部 JSON schema。
-
-### 2. AI 可以持续搜索和生成候选，但不能直接进入 curated master
-
-数据流：
+AI 数据流：
 
 ```text
 AI / Search
   ↓
 source-qualified candidate
   ↓
-duplicate / search-coverage check
+subject-grade-domain coverage / duplicate check
   ↓
-UI human review
+UI decision
+  ↓ promote_to_human_review
+Human Review Case Draft（本地）
+  ↓ 下一阶段：case activation
+current-case decision v2
   ↓
-decision v2
-  ↓
-structured proposal（如需要）
+new/existing structured proposal
   ↓
 secondary regression
   ↓
@@ -52,234 +43,184 @@ content approval gate
 curated release
 ```
 
-任何 AI 新内容固定：
-
-- `aiGenerated=true`；
-- `reviewStatus=ai_candidate`；
-- `autoApply=false`；
-- `nextGate=human_ui_review`；
-- 不生成 `expert_verified`；
-- 不直接修改 seed / raw / curated master / CloudBase。
+任何 AI 内容固定 `aiGenerated=true / reviewStatus=ai_candidate / autoApply=false / humanVerified=false`，不会直接修改 seed/raw/curated master/CloudBase。
 
 ## 二、AI 搜索源优先级
 
 ### Tier A：官方课程标准/教育行政来源
 
-优先用于学段领域锚点、课程目标、学业要求、内容领域与课标证据。
+用于学习领域、任务群、课程目标、学业要求和课标证据。官方框架候选可以是 `high` confidence，但仍需 UI 人审。
 
-当前已使用教育部《义务教育数学课程标准（2022年版）》产生数学领域候选。这类来源可以标为 `high` confidence，但仍需 UI 人审。
+当前已使用：
+
+- 教育部 2022 数学课程标准；
+- 教育部 2022 课标发布解读中的语文六学习任务群。
 
 ### Tier B：出版社当前教材/数字资源
 
-优先用于教材结构、当前单元主题、交际功能、章节/小节/活动证据。
-
-如果只能看到目录或主题标题，置信度必须下降，不能由标题直接推断完整知识点或具体语法规则。
+用于当前可见的单元主题、活动栏目、交际功能和教材结构。页面只展示 `Read and write / Let’s spell / Let’s talk` 时，只能生成对应活动/能力候选，不得由栏目名自动补具体语法、句型或词汇清单。
 
 ### Tier C：出版社历史目录/版次未知配套资源
 
-只用于发现候选和版本差异检查。必须显式标记：
-
-- `publisher_catalog_version_unknown`；
-- 不得声称为当前教材；
-- 不得据此自动改变现有教材版次状态。
-
-当前部分语文同步字词手册属于这一类：它们可以支持“字词学习方向”的候选发现，但不能替代当前教材版本核验。
+仅用于候选发现和版本差异检查；必须标 `publisher_catalog_version_unknown`，不得更新 current-edition 状态。
 
 ### Tier D：开放许可知识图谱/数据集
 
-例如 K12-KGraph。必须保留 raw ID、sourceLocator、原始 relation type、license 和 provenance。AI 解释层与 raw evidence 分开保存。
+例如 K12-KGraph。必须保留 raw ID、sourceLocator、原始 relation type、license 和 provenance；AI解释层与 raw evidence 分开。
 
 ## 三、AI Discovery 当前基线
 
 ### Wave 01
 
-`ai-discovery-2026-09-09-wave01`：20 条。
-
-- 语文 7；
-- 英语 5；
-- 数学 8。
-
-数学优先落 2022 课标领域锚点，例如数与运算、数量关系、图形的认识与测量、数据分类、图形的位置与运动、数据的收集整理与表达、随机现象发生的可能性。
+`ai-discovery-2026-09-09-wave01`：20 条（语文7 / 英语5 / 数学8）。
 
 ### Wave 02
 
-`ai-discovery-2026-09-09-wave02`：21 条。
+`ai-discovery-2026-09-09-wave02`：21 条（语文13 / 英语7 / 数学1），用于补齐第一批学科×年级空白和浅覆盖。
 
-优先补第一批空白/浅覆盖年级：
+### Wave 03 — 领域缺口
 
-- 语文 G2/G3/G5/G6 从 0 提升为至少 3 条候选；
-- 语文 G4 从 2 提升为 3；
-- 英语 G4/G5 从 0 提升为 3；
-- 英语 G6 从 2 提升为 3；
-- 数学 G5/G6 增补第三学段“数据的收集、整理与表达”官方课标锚点。
+`ai-discovery-2026-09-09-wave03-domain-gaps`：12 条：
 
-两批合计：**41 条 AI candidate**。
+- 语文 6：六个学习任务群官方框架锚点；
+- 英语 4：四年级规则主题听说读写整合、五年级语音拼读/Read and write、六年级主题 Read and write；
+- 数学 2：综合与实践、主题活动与项目学习。
 
-- 语文：20；
-- 英语：12；
-- 数学：9。
+三批合计：**53 条 AI candidate**：
 
-### AI 搜索覆盖矩阵
+- 语文 26；
+- 英语 16；
+- 数学 11。
 
-16 个必核学科年级目前均达到 `candidate_review_ready` 的**最低门槛**（每个单元至少 3 条 AI candidate）：
+## 四、两层搜索覆盖矩阵
 
-- 语文 G1–G6：6/6；
-- 英语 G3–G6：4/4；
-- 数学 G1–G6：6/6。
+### 1. 学科 × 年级最低候选池
 
-这只表示“每个年级都有一批候选可以开始 UI 审校”，**不表示该年级知识体系完整，不是课程覆盖率，也不能作为发布指标。**
+16 个必核学科年级均已达到至少 3 条候选的 `candidate_review_ready` 最低启动门槛。该指标只表示“已有候选可审”，不是课程覆盖率。
 
-下一轮 AI 搜索不再以“每年级至少3条”为目标，而改为按领域/任务群覆盖深度推进。
+### 2. 学科 × 年级 × 领域深度矩阵
 
-## 四、逐科逐年级扩库策略
+新增 `aiDiscoveryDomainCoverage.ts` 和 `/knowledge-map/discovery/domains`。
 
-### Wave A：领域覆盖深度
+共 **112 个搜索规划单元**：
 
-#### 语文
+- 语文：10 个领域/任务群 × 6 年级 = 60；
+- 英语：7 个语言维度 × 4 年级 = 28；
+- 数学：4 个领域 × 6 年级 = 24。
 
-按 2022 课标实践活动与学习任务群反向检查现有 299 条及 AI 候选，至少分别覆盖：
+状态：
+
+- `search_required`：0 条候选；
+- `shallow_candidates`：仅 1 条；
+- `review_pool_ready`：至少 2 条。
+
+矩阵明确保留搜索空白，下一批 AI 搜索由这些空白驱动，而不是继续按总节点数优化。
+
+## 五、逐科扩库方向
+
+### 语文
 
 - 识字与写字；
 - 阅读与鉴赏；
 - 表达与交流；
 - 梳理与探究；
-- 六个学习任务群。
+- 语言文字积累与梳理；
+- 实用性阅读与交流；
+- 文学阅读与创意表达；
+- 思辨性阅读与表达；
+- 整本书阅读；
+- 跨学科学习。
 
-每个年级不能仅靠“字词”候选达到表面覆盖。
+六学习任务群的 Wave03 条目是框架锚点，不等于每个年级已经有具体内容；下一批应查分学段证据和教材实例。
 
-#### 英语
+### 英语
 
-以当前 PEP 数字资源和课标证据为入口，至少分别检查：
-
-- 语音/拼读；
-- 词汇与语言知识；
+- 语音与拼读；
+- 语言知识；
 - 交际功能；
 - 听说；
 - 阅读；
-- 写作/书面表达；
-- 文化意识/跨文化主题。
+- 写作；
+- 文化意识。
 
-单元标题只作为主题入口，不能自动生成具体句型规则。
+优先补领域矩阵中的 `search_required`，尤其不能让单元主题候选替代语音、阅读、写作或文化维度。
 
-#### 数学
-
-继续采用 2022 课标领域 + K12-KGraph raw Concept/Skill/Exercise 双源：
+### 数学
 
 - 数与代数；
 - 图形与几何；
 - 统计与概率；
 - 综合与实践。
 
-每个年级同时检查 KnowledgeNode、Occurrence、AssessmentTask 和关系证据。
+继续采用 2022 课标领域 + K12-KGraph raw Concept/Skill/Exercise 双源，并同时核 AssessmentTask 和 relation evidence。
 
-### Wave B：年级内知识树
+## 六、UI-first 审核现状
 
-每个年级按：
+### 已完成
 
-```text
-领域/任务群
-  → 单元/主题
-    → KnowledgeNode
-      → Occurrence
-      → AssessmentTask
-      → Relation
-      → StandardEvidence
-```
+- [x] AI Discovery Inbox；
+- [x] Review Center 导航中枢；
+- [x] AI 领域深度搜索矩阵；
+- [x] `promote_to_human_review` 通过 UI 直接生成绑定候选快照和证据的 `Human Review Case Draft`；
+- [x] `/knowledge-map/human-review/ai` 查看本地 AI 精审队列；
+- [x] 文件/JSON 降级为审计副本，不再是 AI 候选进入下一阶段的必经步骤。
 
-逐一检查。
+### 下一步
 
-### Wave C：跨年级进阶
+- [ ] 将 AI case draft 激活为统一 `HumanReviewCase`；
+- [ ] AI case activation 必须重新检查 current candidate state 与 evidence；
+- [ ] 为“新增知识点”增加 `new_knowledge_candidate` structured proposal，而不是复用只针对现有节点的 patch schema；
+- [ ] structured proposal 改成可视化表单；
+- [ ] Review Center 增加连续“上一条/下一条”、审核进度、快捷键、决策历史；
+- [ ] 批量只允许筛选/分派，禁止批量审核通过。
 
-仅在有证据时建立 prerequisite、progresses_to、revisits、related_to。名称相似、教材顺序或 AI 常识都不能独立成为正式关系证据。
-
-## 五、UI Review Center 下一阶段
-
-Review Center v1 已提供统一入口和待办计数。下一步把分散页面的关键动作收敛成连续 UI 流程。
-
-### 必须支持
-
-- 学科 / 年级 / 来源 / Wave / 状态筛选；
-- 左侧审核队列；
-- 中间候选内容与 before/after；
-- 右侧来源证据、重复命中、课标证据、relation context；
-- 接受 / 修订 / 拒绝 / 暂缓；
-- 键盘“上一条/下一条”；
-- 本地自动保存；
-- 审核进度和待办计数；
-- 批量只做筛选/分派，不允许批量“审核通过”；
-- 决策历史；
-- 当前 caseState 失效提醒；
-- structured proposal 可视化表单，不要求人工编写 JSON；
-- AI candidate 的 `promote_to_human_review` 可以直接在 UI 创建下一阶段 case 草稿。
-
-### 审核状态
-
-```text
-ai_candidate
-→ human_review_pending
-→ human_decision_recorded
-→ structured_proposal_pending (如需要)
-→ secondary_regression_passed
-→ approval_pending
-→ signed_approved / rejected / deferred
-```
-
-任何状态都不能通过 UI 文案混淆成“已正式发布”。
-
-## 六、AI 扩库质量门禁
+## 七、AI 扩库质量门禁
 
 每个 AI candidate 至少检查：
 
 1. sourceRefs 非空；
 2. 来源 authority 明确；
 3. 学科/年级范围明确；
-4. evidenceSummary 与来源范围相符；
-5. confidence 有依据；
+4. evidenceSummary 不超出来源；
+5. confidence 有来源层级依据；
 6. exact duplicate 检查；
-7. semantic duplicate 进入真人 review，不自动合并；
-8. 当前教材版次未知时明确警告；
-9. 不携带受版权限制的教材正文长文本；
-10. 不自动写入正式库。
+7. semantic duplicate 必须真人判断；
+8. 版次未知必须警告；
+9. 不复制受版权限制的教材正文长文本；
+10. 不自动写正式库；
+11. 进入真人精审时必须绑定当前 candidateState 与至少一条实际查看的 sourceRef；
+12. 领域矩阵仅用于搜索规划，不得转译成“知识完成率”。
 
-下一步增加领域覆盖检查与 AI search batch registry，避免只按节点数量优化。
-
-## 七、开发优先级（调整后）
+## 八、开发优先级
 
 ### P0 — UI-first 审核
 
-- [x] AI Discovery Inbox v1；
-- [x] Review Center v1 导航中枢；
-- [ ] 将 human-review / current / proposal 的核心动作合并成连续 Review Center 工作流；
-- [ ] structured proposal 改成可视化表单；
-- [ ] 增加审核进度、下一条、快捷键、决策历史；
-- [ ] AI candidate → human-review case 创建在 UI 内完成；
-- [ ] 所有学科/年级审核通过 UI 完成，文件仅做导入导出。
+- [x] AI候选 → 本地 Human Review Case Draft 直连；
+- [ ] Case Draft → current HumanReviewCase activation；
+- [ ] new-knowledge structured proposal；
+- [ ] 连续单页审核体验与快捷键/历史。
 
 ### P0 — AI 扩库
 
-- [x] Wave 01：20 条带来源 AI candidate；
-- [x] Wave 02：21 条候选补齐空白/浅覆盖学科年级；
-- [x] 两批聚合 registry：41 条候选；
-- [x] 16 个学科×年级 AI 搜索最低候选覆盖矩阵；
-- [ ] 建立领域维度 search batch registry；
-- [ ] 自动生成“领域覆盖不足”搜索任务；
-- [ ] 语文按实践活动/任务群深化；
-- [ ] 英语按语音/语言知识/交际/听说读写/文化深化；
-- [ ] 数学按四领域 + raw Assessment/Relation 深化；
-- [ ] 每批进入 UI 人审，不直接写 curated master。
+- [x] Wave01 / Wave02 / Wave03，共 53 条；
+- [x] 16 学科年级最低候选矩阵；
+- [x] 112 单元领域深度矩阵；
+- [ ] 根据 domain search queue 生成 Wave04；
+- [ ] 继续补官方分学段课标证据，而不是只依赖出版社目录；
+- [ ] K12-KGraph 数学 raw 数据继续扩大并映射到同一领域矩阵。
 
 ### P1 — Content Approval Gate
 
 - [ ] 独立于 standards gate；
-- [ ] 绑定 candidate snapshot v2 / evidence / current version / reviewer public key；
+- [ ] 绑定 candidate snapshot / evidence / current version / reviewer public key；
 - [ ] 内容或证据变化后旧 approval 失效；
 - [ ] 真实签名只来自线下核验 reviewer；仓库不保存私钥。
 
 ### P1 — Unified Curriculum Export
 
 - [ ] normalized Math 接入统一三科 Curriculum；
-- [ ] AI-approved candidate 接入同一 candidate ChangeSet；
-- [ ] 离线 HTML 只导出明确 scope 的 reviewed/research 数据。
+- [ ] 人审通过的 AI candidate 使用同一 candidate ChangeSet；
+- [ ] 离线 HTML 明确 reviewed/research scope。
 
 ### P2 — 工程治理
 
@@ -288,12 +229,13 @@ ai_candidate
 - [ ] npm audit 非破坏性处理；
 - [ ] 10k 节点性能测试。
 
-## 八、不可改变的边界
+## 九、不可改变的边界
 
 - AI 不是学科审核者；
 - AI 搜索结果不是教材事实；
 - 出版社旧目录/配套手册不能冒充当前教材版次；
-- `candidate_review_ready` 不是知识完整；
+- `candidate_review_ready` / `review_pool_ready` 都不是知识完整；
 - exact duplicate=0 不代表没有语义重复；
 - confidence 不是教育学正确率；
+- 当前 `humanVerified=0`；
 - 未经真人 UI 核对和正式门禁，任何 AI candidate 都不能进入正式发布数据。
