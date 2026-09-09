@@ -24,6 +24,7 @@
 - [x] exact normalized label duplicate check；不把它等同于 semantic duplicate。
 - [x] 16 个 `subject × grade` 搜索覆盖单元；两批后均达到“至少3条候选可供UI审校”的最低门槛。
 - [x] 明确 `candidate_review_ready != curriculum_complete`，AI 搜索覆盖矩阵不能作为正式课程覆盖率。
+- [x] 当前 GitHub Actions 基线：**24 test files / 130 tests passed**。
 - [ ] 建立 `subject × grade × domain/task-group × source tier` 的深度 search batch registry。
 - [ ] 自动生成“领域覆盖不足”AI 搜索任务，而不是继续按总节点数量优化。
 - [ ] 语文 G1–G6 按识字写字/阅读鉴赏/表达交流/梳理探究/六任务群持续深化。
