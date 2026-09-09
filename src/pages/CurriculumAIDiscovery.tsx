@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  aiDiscoveryBatch,
-  aiDiscoveryCandidates,
-  aiDiscoverySummary,
-  createAIDiscoveryDecision,
+  aiDiscoveryBatches,
+  aiDiscoveryCandidatesAll,
+  aiDiscoveryRegistrySummary,
+  createAIDiscoveryDecisionAll,
   exactExistingMatches,
   type AIDiscoveryConfidence,
   type AIDiscoveryDecision,
-} from '../content/curriculum/aiDiscovery'
+} from '../content/curriculum/aiDiscoveryRegistry'
 import { subjectLabels, type CurriculumSubject } from '../content/curriculum/curriculum'
 
 const STORAGE_KEY = 'qiqi.curriculum-ai-discovery-review.v1'
@@ -68,7 +68,7 @@ function downloadJson(filename: string, payload: unknown) {
 }
 
 export default function CurriculumAIDiscovery() {
-  const first = aiDiscoveryCandidates[0]
+  const first = aiDiscoveryCandidatesAll[0]
   const [subject, setSubject] = useState<'all' | CurriculumSubject>('all')
   const [confidence, setConfidence] = useState<'all' | AIDiscoveryConfidence>('all')
   const [grade, setGrade] = useState<'all' | number>('all')
@@ -76,14 +76,14 @@ export default function CurriculumAIDiscovery() {
   const [draft, setDraft] = useState<LocalReviewDraft>(() => readStore()[first?.id ?? ''] ?? emptyDraft())
   const [message, setMessage] = useState('')
 
-  const visible = useMemo(() => aiDiscoveryCandidates.filter((item) => {
+  const visible = useMemo(() => aiDiscoveryCandidatesAll.filter((item) => {
     if (subject !== 'all' && item.subject !== subject) return false
     if (confidence !== 'all' && item.confidence !== confidence) return false
     if (grade !== 'all' && !item.grades.includes(grade)) return false
     return true
   }), [subject, confidence, grade])
 
-  const selected = aiDiscoveryCandidates.find((item) => item.id === selectedId) ?? visible[0] ?? null
+  const selected = aiDiscoveryCandidatesAll.find((item) => item.id === selectedId) ?? visible[0] ?? null
   const duplicateMatches = selected ? exactExistingMatches(selected) : []
 
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function CurriculumAIDiscovery() {
     }
     try {
       const evidenceRefs = draft.evidenceRefs.split(/\n+/).map((item) => item.trim()).filter(Boolean)
-      const payload = createAIDiscoveryDecision(
+      const payload = createAIDiscoveryDecisionAll(
         selected.id,
         draft.decision,
         draft.reviewerName,
@@ -136,6 +136,7 @@ export default function CurriculumAIDiscovery() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link to="/knowledge-map/review-center" className="rounded-full bg-blue-100 px-4 py-2 text-sm font-black text-blue-700">Review Center</Link>
           <Link to="/knowledge-map/human-review" className="rounded-full bg-violet-100 px-4 py-2 text-sm font-black text-violet-700">现有真人核对</Link>
           <Link to="/knowledge-map/verification" className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">逐年级核对矩阵</Link>
         </div>
@@ -143,12 +144,12 @@ export default function CurriculumAIDiscovery() {
 
       <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-6">
         {[
-          ['AI候选', aiDiscoverySummary.total],
-          ['语文', aiDiscoverySummary.chinese],
-          ['英语', aiDiscoverySummary.english],
-          ['数学', aiDiscoverySummary.math],
-          ['高置信', aiDiscoverySummary.highConfidence],
-          ['精确重复候选', aiDiscoverySummary.exactDuplicateCandidateCount],
+          ['AI候选', aiDiscoveryRegistrySummary.total],
+          ['语文', aiDiscoveryRegistrySummary.chinese],
+          ['英语', aiDiscoveryRegistrySummary.english],
+          ['数学', aiDiscoveryRegistrySummary.math],
+          ['高置信', aiDiscoveryRegistrySummary.highConfidence],
+          ['精确重复候选', aiDiscoveryRegistrySummary.exactDuplicateCandidateCount],
         ].map(([label, value]) => (
           <div key={label} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
             <div className="text-2xl font-black text-stone-900">{value}</div>
@@ -158,7 +159,7 @@ export default function CurriculumAIDiscovery() {
       </section>
 
       <section className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-6 text-blue-800">
-        <strong>{aiDiscoveryBatch.batchId}</strong>：高置信主要来自教育部 2022 数学课标；出版社网页只生成教材主题/功能候选。标题级推断统一降置信度，版次未知的目录不得当作当前教材事实。
+        <strong>{aiDiscoveryBatches.length} 个搜索批次：</strong>{aiDiscoveryBatches.map((item) => item.batchId).join(' · ')}。高置信主要来自教育部 2022 课标；出版社网页只生成教材主题/功能候选。标题级推断统一降置信度，版次未知的目录不得当作当前教材事实。
       </section>
 
       <div className="mt-4 flex flex-wrap gap-2 rounded-2xl bg-white p-4 shadow-sm">
