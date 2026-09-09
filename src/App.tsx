@@ -9,6 +9,7 @@ import { getProfile, getSessionUser, type Profile } from './lib/cloudbase'
 const KnowledgeMap = lazy(() => import('./pages/KnowledgeMap'))
 const CurriculumReview = lazy(() => import('./pages/CurriculumReview'))
 const CurriculumVerification = lazy(() => import('./pages/CurriculumVerificationWave2'))
+const CurriculumReviewCenter = lazy(() => import('./pages/CurriculumReviewCenter'))
 const CurriculumHumanReview = lazy(() => import('./pages/CurriculumHumanReview'))
 const CurriculumHumanReviewCurrent = lazy(() => import('./pages/CurriculumHumanReviewCurrent'))
 const CurriculumHumanReviewIngestion = lazy(() => import('./pages/CurriculumHumanReviewIngestion'))
@@ -77,6 +78,7 @@ export default function App() {
         <Route path="/knowledge-map" element={<KnowledgeMap />} />
         <Route path="/knowledge-map/review" element={<CurriculumReview />} />
         <Route path="/knowledge-map/verification" element={<CurriculumVerification />} />
+        <Route path="/knowledge-map/review-center" element={<CurriculumReviewCenter />} />
         <Route path="/knowledge-map/human-review" element={<CurriculumHumanReview />} />
         <Route path="/knowledge-map/human-review/current" element={<CurriculumHumanReviewCurrent />} />
         <Route path="/knowledge-map/human-review/ingest" element={<CurriculumHumanReviewIngestion />} />
