@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/pages/KnowledgeMap.tsx'
       - 'src/pages/CurriculumReview.tsx'
+      - 'src/pages/CurriculumVerification.tsx'
       - 'src/pages/CurriculumStandards.tsx'
       - 'src/pages/StandardMappingReview.tsx'
       - 'src/pages/MathResearchSample.tsx'
@@ -25,6 +26,7 @@ on:
     paths:
       - 'src/pages/KnowledgeMap.tsx'
       - 'src/pages/CurriculumReview.tsx'
+      - 'src/pages/CurriculumVerification.tsx'
       - 'src/pages/CurriculumStandards.tsx'
       - 'src/pages/StandardMappingReview.tsx'
       - 'src/pages/MathResearchSample.tsx'
