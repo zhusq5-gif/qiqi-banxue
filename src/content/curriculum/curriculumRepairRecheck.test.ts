@@ -4,8 +4,8 @@ import { repairProposalForIssue } from './curriculumRepairProposals'
 import { createCandidateRepairRecheckBundle, createRepairRecheckBundle } from './curriculumRepairRecheck'
 
 describe('curriculum repair recheck bundles', () => {
-  it('moves wave-1 candidate patches F001-F004 into recheck_pending without mutating seed', () => {
-    for (const issueId of ['F001', 'F002', 'F003', 'F004']) {
+  it('moves bounded candidate patches into recheck_pending without mutating seed', () => {
+    for (const issueId of ['F001', 'F002', 'F003', 'F004', 'F006', 'F007']) {
       const proposal = repairProposalForIssue(issueId)!
       const before = JSON.stringify(entryById(proposal.nodeId))
       const bundle = createCandidateRepairRecheckBundle(issueId)
