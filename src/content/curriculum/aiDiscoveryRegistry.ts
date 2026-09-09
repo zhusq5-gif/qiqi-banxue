@@ -7,9 +7,14 @@ import {
   type AIDiscoveryDecisionRecord,
 } from './aiDiscovery'
 import { aiDiscoveryExpansion02, aiDiscoveryExpansion02Batch } from './aiDiscoveryExpansion02'
+import { aiDiscoveryExpansion03, aiDiscoveryExpansion03Batch } from './aiDiscoveryExpansion03'
 
-export const aiDiscoveryBatches = [aiDiscoveryBatch, aiDiscoveryExpansion02Batch]
-export const aiDiscoveryCandidatesAll: AIDiscoveryCandidate[] = [...baseCandidates, ...aiDiscoveryExpansion02]
+export const aiDiscoveryBatches = [aiDiscoveryBatch, aiDiscoveryExpansion02Batch, aiDiscoveryExpansion03Batch]
+export const aiDiscoveryCandidatesAll: AIDiscoveryCandidate[] = [
+  ...baseCandidates,
+  ...aiDiscoveryExpansion02,
+  ...aiDiscoveryExpansion03,
+]
 
 export const aiDiscoveryRegistrySummary = {
   batchCount: aiDiscoveryBatches.length,
