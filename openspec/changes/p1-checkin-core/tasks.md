@@ -10,7 +10,7 @@
 
 - [x] 2.1 在既有 CloudBase 环境（PG 模式）执行建表迁移 `cloudbase/migrations/20260827035452_init_six_tables.sql`：六张表 + RLS 政策（仅 owner 本人可读写，经 MCP managePgDatabase applyMigration 执行并验证）；经 MCP manageAppAuth 开启邮箱登录并写入 QQ 邮箱 SMTP 发件人（zhusq0506@qq.com）；已验证 authenticated 无身份角色查询被 RLS 拦截（返回 0 行）、(subject_id,date) 唯一约束与六条 owner 策略均落库
 - [x] 2.2 实现数据库函数 RPC：`checkin(p_subject_id, p_date)` 与 `redeem(p_wish_id)`（PL/pgSQL 原子事务、SECURITY INVOKER 受 RLS 约束、唯一约束冲突幂等返回 already），以版本化迁移 20260827072819_add_checkin_redeem_rpc 落库并 GRANT EXECUTE TO authenticated（双函数已核实存在于 pg_proc）；余额经 star_ledger 聚合；运行时重复调用验证随 E2E（唯一约束已落库兜底）
-- [ ] 2.3 封装 `src/lib/cloudbase.ts` 客户端与数据访问函数（业务数据优先 js-sdk rdb()；若认证身份无法传递至 RLS 则收口到云函数，以本任务跨账号测试结论为准），验证两个测试账号互相读取对方数据被 RLS 拒绝（数据层已封装完成并上线；RLS 已在库侧验证 authenticated 匿名身份查询返回 0 行，但双注册账号交叉读取的显式测试待第二测试账号，需 chester 提供邮箱）
+- [x] 2.3 封装 `src/lib/cloudbase.ts` 客户端与数据访问函数（业务数据优先 js-sdk rdb()；若认证身份无法传递至 RLS 则收口到云函数，以本任务跨账号测试结论为准），验证两个测试账号互相读取对方数据被 RLS 拒绝（数据层封装 rdb() 走 RLS，无需云函数收口。跨账号显式测试通过 2026-09-08/09：以第二账号 383534737@qq.com 真实注册（验证码两步流）→ 档案引导 → 科目页与今日页均看不到账号 A 数据（0 行）→ B 创建「RLS测试科目」→ 切回账号 A 科目列表仅见自己的「英语磨耳朵」「绘本共读」，B 的科目不可见——双向 RLS 隔离验证通过；测试账号保留作回归用）
 
 ## 3. 认证与儿童档案
 
