@@ -9,6 +9,12 @@ import {
   type AIDiscoveryConfidence,
   type AIDiscoveryDecision,
 } from '../content/curriculum/aiDiscoveryRegistry'
+import {
+  AI_PROMOTED_REVIEW_STORAGE_KEY,
+  createAIDiscoveryHumanReviewCaseDraft,
+  mergeAIDiscoveryHumanReviewCaseDrafts,
+  type AIDiscoveryHumanReviewCaseDraft,
+} from '../content/curriculum/aiDiscoveryPromotion'
 import { subjectLabels, type CurriculumSubject } from '../content/curriculum/curriculum'
 
 const STORAGE_KEY = 'qiqi.curriculum-ai-discovery-review.v1'
@@ -53,8 +59,19 @@ function readStore(): DraftStore {
   }
 }
 
-function emptyDraft(): LocalReviewDraft {
-  return { decision: '', reviewerName: '', reviewerRole: '', rationale: '', evidenceRefs: '' }
+function readPromotedQueue(): AIDiscoveryHumanReviewCaseDraft[] {
+  try {
+    const raw = window.localStorage.getItem(AI_PROMOTED_REVIEW_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as AIDiscoveryHumanReviewCaseDraft[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function emptyDraft(sourceRefs: string[] = []): LocalReviewDraft {
+  return { decision: '', reviewerName: '', reviewerRole: '', rationale: '', evidenceRefs: sourceRefs.join('\n') }
 }
 
 function downloadJson(filename: string, payload: unknown) {
@@ -73,7 +90,7 @@ export default function CurriculumAIDiscovery() {
   const [confidence, setConfidence] = useState<'all' | AIDiscoveryConfidence>('all')
   const [grade, setGrade] = useState<'all' | number>('all')
   const [selectedId, setSelectedId] = useState(first?.id ?? '')
-  const [draft, setDraft] = useState<LocalReviewDraft>(() => readStore()[first?.id ?? ''] ?? emptyDraft())
+  const [draft, setDraft] = useState<LocalReviewDraft>(() => readStore()[first?.id ?? ''] ?? emptyDraft(first?.sourceRefs ?? []))
   const [message, setMessage] = useState('')
 
   const visible = useMemo(() => aiDiscoveryCandidatesAll.filter((item) => {
@@ -88,7 +105,7 @@ export default function CurriculumAIDiscovery() {
 
   useEffect(() => {
     if (!selected) return
-    setDraft(readStore()[selected.id] ?? emptyDraft())
+    setDraft(readStore()[selected.id] ?? emptyDraft(selected.sourceRefs))
     setMessage('')
   }, [selected?.id])
 
@@ -104,23 +121,41 @@ export default function CurriculumAIDiscovery() {
     setMessage('已保存本地审核草稿')
   }
 
-  function exportDecision() {
-    if (!selected || !draft.decision) {
-      setMessage('请先选择审核决定')
-      return
-    }
+  function buildDecision() {
+    if (!selected || !draft.decision) throw new Error('请先选择审核决定')
+    const evidenceRefs = draft.evidenceRefs.split(/\n+/).map((item) => item.trim()).filter(Boolean)
+    return createAIDiscoveryDecisionAll(
+      selected.id,
+      draft.decision,
+      draft.reviewerName,
+      draft.reviewerRole,
+      draft.rationale,
+      evidenceRefs,
+    )
+  }
+
+  function submitUiDecision() {
     try {
-      const evidenceRefs = draft.evidenceRefs.split(/\n+/).map((item) => item.trim()).filter(Boolean)
-      const payload = createAIDiscoveryDecisionAll(
-        selected.id,
-        draft.decision,
-        draft.reviewerName,
-        draft.reviewerRole,
-        draft.rationale,
-        evidenceRefs,
-      )
-      downloadJson(`ai-discovery-${selected.id}.json`, payload)
-      setMessage('已导出 unsigned AI 候选审核决定；没有写入知识库')
+      const payload = buildDecision()
+      saveDraft()
+      if (payload.decision === 'promote_to_human_review') {
+        const caseDraft = createAIDiscoveryHumanReviewCaseDraft(payload)
+        const next = mergeAIDiscoveryHumanReviewCaseDrafts(readPromotedQueue(), caseDraft)
+        window.localStorage.setItem(AI_PROMOTED_REVIEW_STORAGE_KEY, JSON.stringify(next))
+        setMessage('已通过 UI 进入真人精审队列；未写入正式知识库')
+      } else {
+        setMessage(`已记录 UI 决定：${decisionLabels[payload.decision]}；未写入正式知识库`)
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '审核决定校验失败')
+    }
+  }
+
+  function exportDecision() {
+    try {
+      const payload = buildDecision()
+      downloadJson(`ai-discovery-${payload.candidateId}.json`, payload)
+      setMessage('已导出审核决定审计副本；JSON 不是正常流程必经步骤')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : '审核决定校验失败')
     }
@@ -132,12 +167,13 @@ export default function CurriculumAIDiscovery() {
         <div>
           <h1 className="text-2xl font-black text-stone-900">AI 知识候选审校台</h1>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-stone-500">
-            AI 负责搜索、抽取和形成候选；真人在这里逐条查看来源、重复命中和置信度，再决定是否进入精审。任何决定都不会自动写入正式知识库。
+            AI 负责搜索、抽取和形成候选；真人逐条查看来源、重复命中和置信度。选择“进入真人精审”后会直接在浏览器建立精审 case draft，不再要求手工中转 JSON。
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link to="/knowledge-map/discovery/domains" className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-emerald-700">领域搜索矩阵</Link>
+          <Link to="/knowledge-map/human-review/ai" className="rounded-full bg-violet-100 px-4 py-2 text-sm font-black text-violet-700">AI精审队列</Link>
           <Link to="/knowledge-map/review-center" className="rounded-full bg-blue-100 px-4 py-2 text-sm font-black text-blue-700">Review Center</Link>
-          <Link to="/knowledge-map/human-review" className="rounded-full bg-violet-100 px-4 py-2 text-sm font-black text-violet-700">现有真人核对</Link>
           <Link to="/knowledge-map/verification" className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">逐年级核对矩阵</Link>
         </div>
       </header>
@@ -159,7 +195,7 @@ export default function CurriculumAIDiscovery() {
       </section>
 
       <section className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-6 text-blue-800">
-        <strong>{aiDiscoveryBatches.length} 个搜索批次：</strong>{aiDiscoveryBatches.map((item) => item.batchId).join(' · ')}。高置信主要来自教育部 2022 课标；出版社网页只生成教材主题/功能候选。标题级推断统一降置信度，版次未知的目录不得当作当前教材事实。
+        <strong>{aiDiscoveryBatches.length} 个搜索批次：</strong>{aiDiscoveryBatches.map((item) => item.batchId).join(' · ')}。第三批开始按领域缺口搜索。高置信框架候选主要来自教育部2022课标；出版社网页只支持其明确展示的教材主题/活动结构。
       </section>
 
       <div className="mt-4 flex flex-wrap gap-2 rounded-2xl bg-white p-4 shadow-sm">
@@ -227,7 +263,7 @@ export default function CurriculumAIDiscovery() {
 
               <section className="rounded-3xl bg-white p-5 shadow-sm">
                 <h3 className="font-black text-stone-900">真人 UI 决策</h3>
-                <p className="mt-1 text-xs leading-5 text-stone-400">“进入真人精审”只把候选送到下一审核阶段，不创建正式 KnowledgeNode。</p>
+                <p className="mt-1 text-xs leading-5 text-stone-400">“进入真人精审”会直接创建本地 Human Review Case Draft；仍不会创建正式 KnowledgeNode。</p>
                 <label className="mt-4 block text-xs font-black text-stone-500">决定</label>
                 <select value={draft.decision} onChange={(event) => setDraft((current) => ({ ...current, decision: event.target.value as AIDiscoveryDecision | '' }))} className="mt-1 h-11 w-full rounded-xl border border-stone-200 px-3 text-sm">
                   <option value="">请选择</option>
@@ -241,7 +277,12 @@ export default function CurriculumAIDiscovery() {
                 <textarea value={draft.rationale} onChange={(event) => setDraft((current) => ({ ...current, rationale: event.target.value }))} rows={4} className="mt-1 w-full rounded-xl border border-stone-200 p-3 text-sm leading-6" />
                 <label className="mt-4 block text-xs font-black text-stone-500">实际查看过的来源（每行一条）</label>
                 <textarea value={draft.evidenceRefs} onChange={(event) => setDraft((current) => ({ ...current, evidenceRefs: event.target.value }))} rows={4} placeholder={selected.sourceRefs.join('\n')} className="mt-1 w-full rounded-xl border border-stone-200 bg-stone-50 p-3 font-mono text-xs leading-5" />
-                <div className="mt-4 flex flex-wrap items-center gap-2"><button type="button" onClick={saveDraft} className="rounded-full bg-blue-600 px-4 py-2 text-sm font-black text-white">保存草稿</button><button type="button" onClick={exportDecision} className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">导出审核决定</button>{message ? <span className="text-xs font-bold text-stone-500">{message}</span> : null}</div>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <button type="button" onClick={saveDraft} className="rounded-full bg-blue-100 px-4 py-2 text-sm font-black text-blue-700">保存草稿</button>
+                  <button type="button" onClick={submitUiDecision} className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">提交 UI 决定</button>
+                  <button type="button" onClick={exportDecision} className="rounded-full bg-stone-100 px-4 py-2 text-sm font-black text-stone-600">导出审计副本</button>
+                  {message ? <span className="text-xs font-bold text-stone-500">{message}</span> : null}
+                </div>
               </section>
             </>
           ) : <div className="rounded-3xl bg-white py-20 text-center text-sm text-stone-400">当前筛选没有候选</div>}
