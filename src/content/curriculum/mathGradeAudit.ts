@@ -1,7 +1,9 @@
 import { mathNormalizedDataset, mathNormalizedNodeById } from './mathNormalized'
+import { mathWave2SourceAuditRecord } from './mathWave2SourceAudit'
 
 export type MathGradeAuditTaskKind =
   | 'assessment_without_target'
+  | 'source_unlinked_assessment_candidate'
   | 'cross_grade_relation_review'
   | 'reused_prior_grade_occurrence_review'
   | 'future_origin_occurrence'
@@ -114,9 +116,7 @@ export function auditMathGrade(grade: number): MathGradeAudit {
   const knowledgeNodeIds = Array.from(new Set(occurrences.map((item) => item.knowledgeNodeId)))
   const assessments = mathNormalizedDataset.assessmentTasks.filter((task) => task.chapterIds.some((id) => chapterGrade(id) === grade))
   const linkedAssessments = assessments.filter((task) => task.assessedKnowledgeNodeIds.length > 0)
-  const unlinkedAssessments = assessments.filter(
-    (task) => task.assessedKnowledgeNodeIds.length === 0 && task.unresolvedRawTargetIds.length === 0,
-  )
+  const unlinkedAssessments = assessments.filter((task) => task.assessedKnowledgeNodeIds.length === 0 && task.unresolvedRawTargetIds.length === 0)
   const unresolvedAssessmentTargetCount = assessments.reduce((sum, task) => sum + task.unresolvedRawTargetIds.length, 0)
 
   const reusedPriorGradeOccurrences: MathOccurrenceReuseAudit[] = []
@@ -144,14 +144,20 @@ export function auditMathGrade(grade: number): MathGradeAudit {
   const tasks: MathGradeAuditTask[] = []
 
   for (const task of unlinkedAssessments) {
+    const sourceAudit = mathWave2SourceAuditRecord(task.rawExerciseId)
+    const sourceUnlinkedCandidate = sourceAudit?.status === 'source_unlinked_candidate'
     tasks.push({
       id: `math-audit:g${grade}:assessment:${task.rawExerciseId}`,
       grade,
-      kind: 'assessment_without_target',
+      kind: sourceUnlinkedCandidate ? 'source_unlinked_assessment_candidate' : 'assessment_without_target',
       severity: 'blocking',
-      title: `测评未绑定知识点：${task.title}`,
-      detail: '该 Exercise 有本年级章节定位，但没有 tests_concept/tests_skill 目标，也没有悬空目标记录。需回查 raw 图谱，补证据或明确标记为未映射。',
-      sourceRefs: [task.source.rawId, task.source.sourceLocator, ...task.chapterIds],
+      title: sourceUnlinkedCandidate ? `原始源疑似未绑定知识点：${task.title}` : `测评未绑定知识点：${task.title}`,
+      detail: sourceUnlinkedCandidate
+        ? '完整 raw source 回查当前只确认本 Exercise 的 appears_in，未定位到 tests_concept/tests_skill。保持阻断候选；禁止依据题意自动补边，需继续源数据/教研确认。'
+        : '该 Exercise 有本年级章节定位，但当前 excerpt 没有 tests_concept/tests_skill 目标，也没有悬空目标记录。必须先回查完整 raw source，再决定补摘录还是登记源数据缺口。',
+      sourceRefs: sourceAudit
+        ? [task.source.rawId, sourceAudit.rawNodeLocator, sourceAudit.rawAppearsInLocator, sourceAudit.inspectedTestsRange ?? sourceAudit.rawTestsLocator ?? '', ...task.chapterIds].filter(Boolean)
+        : [task.source.rawId, task.source.sourceLocator, ...task.chapterIds],
       autoApply: false,
     })
   }
