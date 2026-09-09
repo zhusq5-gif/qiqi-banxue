@@ -35,6 +35,50 @@ export async function getSessionUser(): Promise<{ id: string } | null> {
   return u?.id ? { id: u.id } : null
 }
 
+// ---------- 密码重置 / 邮箱可用性 ----------
+
+/** 探测邮箱是否已注册（注册页失焦提示）。探测失败返回 null，不阻断注册流程 */
+export async function checkEmailRegistered(email: string): Promise<boolean | null> {
+  try {
+    const a = auth as unknown as { isUsernameRegistered?: (u: string) => Promise<boolean> }
+    if (typeof a.isUsernameRegistered === 'function') {
+      // 实测（2026-09-09）：已注册返回 {"exist":true}，未注册返回 {}（exist 缺省→undefined）
+      const r = await a.isUsernameRegistered(email)
+      return r === true
+    }
+  } catch (e) {
+    // 兜底：若服务端以 not_found 错误代替空对象，同样判定未注册
+    const raw = String((e as { message?: string })?.message ?? e)
+    if (/not[_ ]?found|不存在|USER_NOT_FOUND/i.test(raw)) return false
+    /* 其余探测失败静默 */
+  }
+  return null
+}
+
+export interface ResetFlow {
+  /** 传入邮箱验证码与新密码，完成重置（服务端一步校验+改密） */
+  confirm: (code: string, newPassword: string) => Promise<{ error?: string }>
+}
+
+/** 发送密码重置验证码到邮箱，返回确认回调 */
+export async function sendResetCode(email: string): Promise<ResetFlow> {
+  const { data, error } = await auth.resetPasswordForEmail(email)
+  if (error || !data) {
+    const raw = (error as { message?: string })?.message || ''
+    if (/not[_ ]?found|不存在/i.test(raw)) throw new Error('该邮箱未注册')
+    throw new Error(raw || '重置邮件发送失败，请稍后再试')
+  }
+  const updateUser = (data as { updateUser?: (a: { nonce: string; password: string }) => Promise<{ error?: { message?: string } }> })
+    .updateUser
+  if (!updateUser) throw new Error('重置流程初始化失败，请稍后再试')
+  return {
+    async confirm(code, newPassword) {
+      const res = await updateUser({ nonce: code, password: newPassword })
+      return res && res.error ? { error: res.error.message || '重置失败' } : {}
+    },
+  }
+}
+
 // ---------- 档案 ----------
 
 export async function getProfile(): Promise<Profile | null> {

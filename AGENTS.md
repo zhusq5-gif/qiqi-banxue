@@ -13,7 +13,7 @@
 
 - 前端：React 18 + TypeScript + Vite + Tailwind CSS + vite-plugin-pwa（仅应用壳，不做离线数据层）
 - 数据：CloudBase PostgreSQL，六张表 + RLS（`owner_id` 为 text，与 `auth.uid()` 返回类型对齐）；任何 schema 变更必须走 `cloudbase/migrations/` 版本化迁移（14 位时间戳版本号 + 仅小写字母下划线名称），禁止裸 DDL
-- 认证：js-sdk v3（supabase-like）；会话用 `auth.getSession()`，登录用 `auth.signInWithPassword`；勿用 getLoginState/getUser
+- 认证：js-sdk v3（supabase-like）；会话用 `auth.getSession()`，登录用 `auth.signInWithPassword`；勿用 getLoginState/getUser。忘记密码 = `resetPasswordForEmail(email)` 返回 updateUser 回调 → `updateUser({ nonce: 邮箱验证码, password })`；注册页邮箱探测 = `auth.isUsernameRegistered(email)`（已注册返回 true，未注册返回 undefined，见 cloudbase.ts checkEmailRegistered）
 - 日期：一律 Asia/Shanghai 时区 `YYYY-MM-DD`
 - 星星余额 = star_ledger 聚合，不冗余存储；打卡幂等靠 checkins(subject_id, date) 唯一约束
 - 部署：EdgeOne Makers（deploy_folder 上传 dist/ 产物，实测无 GitHub 自动构建绑定）；GitHub 写入用 gh CLI 凭证 + git push（MCP 只读）
