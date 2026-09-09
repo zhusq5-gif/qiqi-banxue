@@ -7,12 +7,12 @@ import {
 } from './aiDiscoveryRegistry'
 
 describe('aggregated AI discovery registry', () => {
-  it('combines two source-qualified batches without duplicate candidate IDs', () => {
-    expect(aiDiscoveryBatches).toHaveLength(2)
-    expect(aiDiscoveryRegistrySummary.total).toBe(41)
-    expect(aiDiscoveryRegistrySummary.chinese).toBe(20)
-    expect(aiDiscoveryRegistrySummary.english).toBe(12)
-    expect(aiDiscoveryRegistrySummary.math).toBe(9)
+  it('combines three source-qualified batches without duplicate candidate IDs', () => {
+    expect(aiDiscoveryBatches).toHaveLength(3)
+    expect(aiDiscoveryRegistrySummary.total).toBe(53)
+    expect(aiDiscoveryRegistrySummary.chinese).toBe(26)
+    expect(aiDiscoveryRegistrySummary.english).toBe(16)
+    expect(aiDiscoveryRegistrySummary.math).toBe(11)
     expect(new Set(aiDiscoveryCandidatesAll.map((item) => item.id)).size).toBe(aiDiscoveryCandidatesAll.length)
   })
 
@@ -30,6 +30,13 @@ describe('aggregated AI discovery registry', () => {
     const versionUnknown = aiDiscoveryCandidatesAll.filter((item) => item.sourceAuthority === 'publisher_catalog_version_unknown')
     expect(versionUnknown.length).toBeGreaterThan(0)
     expect(versionUnknown.every((item) => item.confidence !== 'high')).toBe(true)
+  })
+
+  it('adds official task-group/integrated-practice anchors without presenting them as precise textbook nodes', () => {
+    const taskGroups = aiDiscoveryCandidatesAll.filter((item) => item.id.startsWith('ai3-chinese-task-'))
+    expect(taskGroups).toHaveLength(6)
+    expect(taskGroups.every((item) => item.sourceAuthority === 'official_standard_2022' && item.candidateKind === 'knowledge_domain')).toBe(true)
+    expect(aiDiscoveryCandidatesAll.find((item) => item.id === 'ai3-math-integrated-practice')?.sourceAuthority).toBe('official_standard_2022')
   })
 
   it('supports UI decision export for expansion candidates without auto-application', () => {
