@@ -15,6 +15,8 @@ const CurriculumHumanReviewCurrent = lazy(() => import('./pages/CurriculumHumanR
 const CurriculumHumanReviewIngestion = lazy(() => import('./pages/CurriculumHumanReviewIngestion'))
 const CurriculumHumanReviewProposal = lazy(() => import('./pages/CurriculumHumanReviewProposal'))
 const CurriculumAIDiscovery = lazy(() => import('./pages/CurriculumAIDiscovery'))
+const CurriculumAIDomainCoverage = lazy(() => import('./pages/CurriculumAIDomainCoverage'))
+const CurriculumAIHumanReviewQueue = lazy(() => import('./pages/CurriculumAIHumanReviewQueue'))
 const CurriculumStandards = lazy(() => import('./pages/CurriculumStandards'))
 const StandardMappingReview = lazy(() => import('./pages/StandardMappingReview'))
 const MathResearchSample = lazy(() => import('./pages/MathResearchSample'))
@@ -83,7 +85,9 @@ export default function App() {
         <Route path="/knowledge-map/human-review/current" element={<CurriculumHumanReviewCurrent />} />
         <Route path="/knowledge-map/human-review/ingest" element={<CurriculumHumanReviewIngestion />} />
         <Route path="/knowledge-map/human-review/proposal" element={<CurriculumHumanReviewProposal />} />
+        <Route path="/knowledge-map/human-review/ai" element={<CurriculumAIHumanReviewQueue />} />
         <Route path="/knowledge-map/discovery" element={<CurriculumAIDiscovery />} />
+        <Route path="/knowledge-map/discovery/domains" element={<CurriculumAIDomainCoverage />} />
         <Route path="/knowledge-map/standards" element={<CurriculumStandards />} />
         <Route path="/knowledge-map/standards/review" element={<StandardMappingReview />} />
         <Route path="/knowledge-map/math-sample" element={<MathResearchSample />} />
