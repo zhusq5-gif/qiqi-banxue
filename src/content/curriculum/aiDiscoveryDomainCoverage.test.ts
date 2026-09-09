@@ -40,11 +40,14 @@ describe('AI discovery subject-grade-domain planning', () => {
     expect(aiDiscoveryDomainCoverageCells.some((cell) => cell.subject === 'math' && cell.status === 'search_required')).toBe(true)
   })
 
-  it('classifies current English read/write and phonics candidates for search planning only', () => {
-    const phonics = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai3-english-g5-phonics-spelling')!
-    const readWrite = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai3-english-g5-read-write')!
+  it('uses wave04 to seed English culture/phonics depth while retaining other English search gaps', () => {
+    const phonics = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai4-english-g4-phonics-spelling')!
+    const culture = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai4-english-culture-cross-cultural')!
     expect(aiDiscoveryDomainIdsForCandidate(phonics)).toEqual(expect.arrayContaining(['en-phonics', 'en-language-knowledge']))
-    expect(aiDiscoveryDomainIdsForCandidate(readWrite)).toEqual(expect.arrayContaining(['en-reading', 'en-writing']))
-    expect(aiDiscoveryDomainCoverageCells.some((cell) => cell.domainId === 'en-culture' && cell.status === 'search_required')).toBe(true)
+    expect(aiDiscoveryDomainIdsForCandidate(culture)).toContain('en-culture')
+    const cultureCells = aiDiscoveryDomainCoverageCells.filter((cell) => cell.domainId === 'en-culture')
+    expect(cultureCells).toHaveLength(4)
+    expect(cultureCells.every((cell) => cell.candidateCount >= 1)).toBe(true)
+    expect(aiDiscoveryDomainCoverageCells.some((cell) => cell.subject === 'english' && cell.status === 'search_required')).toBe(true)
   })
 })
