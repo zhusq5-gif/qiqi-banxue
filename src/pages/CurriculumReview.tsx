@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import StandardEvidencePanel from '../components/curriculum/StandardEvidencePanel'
 import { curriculumSeed, entryById, semesterLabel, subjectLabels } from '../content/curriculum/curriculum'
+import { curriculumRepairTasks } from '../content/curriculum/curriculumVerification'
 
 type RevisionDraft = {
   issueId: string
@@ -57,6 +58,7 @@ export default function CurriculumReview() {
 
   const issue = useMemo(() => curriculumSeed.issues.find((item) => item.id === selectedIssueId) ?? null, [selectedIssueId])
   const entry = issue ? entryById(issue.nodeId) : null
+  const repairTask = issue ? curriculumRepairTasks.find((task) => task.issueId === issue.id) ?? null : null
 
   useEffect(() => {
     const stored = readStore().drafts[selectedIssueId]
@@ -90,6 +92,7 @@ export default function CurriculumReview() {
       exportedAt: new Date().toISOString(),
       status: 'draft_only',
       warning: '此文件不是专家审核记录，不得直接进入正式发布库。',
+      verificationTask: repairTask,
       issue,
       original: {
         id: entry.id,
@@ -120,6 +123,7 @@ export default function CurriculumReview() {
           <p className="mt-2 text-sm leading-6 text-stone-500">修订仅保存在当前浏览器的版本化本地草稿层，不覆盖种子 JSON，不写 CloudBase，也不会生成专家审核状态。</p>
         </div>
         <div className="flex flex-wrap gap-2 self-start md:self-auto">
+          <Link to="/knowledge-map/verification" className="rounded-full bg-violet-100 px-4 py-2 text-sm font-black text-violet-700">逐年级核对计划</Link>
           <Link to="/knowledge-map/standards" className="rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-emerald-700">2022 课标证据</Link>
           <Link to="/knowledge-map" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-stone-700 shadow">返回知识地图</Link>
         </div>
@@ -127,7 +131,7 @@ export default function CurriculumReview() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
         <span className="font-black">治理提醒：</span>
-        <span>本地已保存 {savedCount} 条草稿。导出的 JSON 仍是 draft_only，必须经过学科审核与发布门禁后才能进入正式库。</span>
+        <span>本地已保存 {savedCount} 条草稿。导出的 JSON 仍是 draft_only，必须经过“修补后复测 → 真人学科复核 → 发布门禁”后才能进入正式库。</span>
       </div>
 
       <section className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -137,6 +141,7 @@ export default function CurriculumReview() {
             {curriculumSeed.issues.map((item) => {
               const node = entryById(item.nodeId)
               const hasDraft = Boolean(readStore().drafts[item.id])
+              const task = curriculumRepairTasks.find((candidate) => candidate.issueId === item.id)
               return (
                 <button key={item.id} type="button" onClick={() => setSelectedIssueId(item.id)} className={`w-full rounded-2xl border p-3 text-left ${item.id === selectedIssueId ? 'border-rose-200 bg-rose-50' : 'border-transparent bg-white'}`}>
                   <div className="flex items-center justify-between gap-2">
@@ -144,7 +149,7 @@ export default function CurriculumReview() {
                     {hasDraft ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">有草稿</span> : null}
                   </div>
                   <div className="mt-1 text-sm font-black leading-5 text-stone-800">{node?.label ?? item.name}</div>
-                  <div className="mt-1 text-[11px] text-stone-400">{subjectLabels[item.subject]} · {item.grade}年级{item.term}册</div>
+                  <div className="mt-1 text-[11px] text-stone-400">{subjectLabels[item.subject]} · {item.grade}年级{item.term}册 · Wave {task?.wave ?? '?'}</div>
                 </button>
               )
             })}
@@ -162,6 +167,17 @@ export default function CurriculumReview() {
                 </div>
                 <span className="self-start rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700">needs_review</span>
               </div>
+
+              {repairTask ? (
+                <section className="mt-5 rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-xs font-black text-violet-700">核对计划修补任务 · Wave {repairTask.wave}</div>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-violet-700">{repairTask.status}</span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-stone-700">{repairTask.repairAction}</p>
+                  <div className="mt-2 text-[10px] font-black text-rose-600">autoApply=false · 修补后必须回归测试，再进入真人学科复核。</div>
+                </section>
+              ) : null}
 
               <section className="mt-5 grid gap-4 xl:grid-cols-2">
                 <div className="rounded-2xl bg-stone-50 p-4">
