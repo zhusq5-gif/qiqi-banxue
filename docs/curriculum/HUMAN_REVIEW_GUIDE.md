@@ -20,8 +20,9 @@
 5. **填写理由和证据**：至少记录审核人姓名、角色、决策、理由、实际查阅的证据引用和时间。
 6. **导出 unsigned decision**：人工决定不直接改 seed，不直接产生 `expert_verified`。
 7. **运行 decision ingestion**：进入 `/knowledge-map/human-review/ingest`，上传或粘贴审核 JSON；系统重新检查当前 case、allowedDecisions、evidenceRefs，并重新运行候选修补检查。
-8. **处理 ingestion 结果**：可安全复测的决定生成 candidate snapshot；需要拆分知识点、人工改写、curated mapping 或 Curriculum relation 的决定进入 `structured_proposal_required`，不会自动生成结构化数据。
-9. **系统二次回归**：候选快照仍为 `autoApply=false`，继续跑 CI/数据门禁后才能进入后续正式流程。
+8. **当前 case 重新确认**：v1 decision 只用于预览/复测。正式向后流转时建议进入 `/knowledge-map/human-review/current`，重新基于当前 case 生成 decision v2。
+9. **处理 ingestion 结果**：可安全复测的决定生成 candidate snapshot；需要拆分知识点、人工改写、curated mapping 或 Curriculum relation 的决定进入 `structured_proposal_required`，不会自动生成结构化数据。
+10. **系统二次回归**：候选快照仍为 `autoApply=false`，继续跑 CI/数据门禁后才能进入后续正式流程。
 
 ## 3. 决策边界
 
@@ -62,22 +63,48 @@ F005 不提供“接受自动改名”。必须区分：
 - `review-packets/WAVE1_CHINESE_REVIEW.md`：F001–F004
 - `review-packets/WAVE2_LANGUAGE_REVIEW.md`：F005–F007
 - `review-packets/WAVE2_MATH_REVIEW.md`：数学 G4/G5 Assessment / relation / occurrence 专项
-- `review-packets/HUMAN_REVIEW_DECISION_TEMPLATE.json`：人工决定填写模板
+- `review-packets/HUMAN_REVIEW_DECISION_TEMPLATE.json`：v1 人工决定模板
+- `review-packets/HUMAN_REVIEW_DECISION_V2_TEMPLATE.json`：绑定当前 caseState 的 v2 模板
 
 系统页面入口：
 
-- `/knowledge-map/human-review`：查看 case、填写并导出真人审核决定。
-- `/knowledge-map/human-review/ingest`：导入审核决定、运行接收校验与二次回归、导出候选快照。
+- `/knowledge-map/human-review`：查看 case、填写并导出 v1 真人审核决定。
+- `/knowledge-map/human-review/ingest`：导入 v1 决定、运行接收校验与二次回归、导出候选快照。
+- `/knowledge-map/human-review/current`：基于当前 case 重新确认并生成 decision v2；页面会立即运行 v2 ingestion。
 
-## 5. ingestion 当前格式边界
+## 5. v1 与 v2 的区别
 
-目前人工工作台导出的 `qiqi-curriculum-human-review-decision/v1` 可以进入 ingestion，但 v1 **没有绑定 case 版本**。因此 ingestion 生成的 candidate snapshot 固定：
+### v1
+
+`qiqi-curriculum-human-review-decision/v1` 可以进入 ingestion，但 **没有绑定审核时的 caseState**。因此 v1 candidate snapshot 固定：
 
 - `formalApprovalEligible=false`
 - `humanVerified=false`
 - `autoApply=false`
 
-这意味着 v1 决定可以用于复测、发现冲突和生成候选快照，但不能直接作为正式发布凭据。如果 case 的来源、候选范围或允许决策在审核后发生变化，应在当前 case 上重新确认，而不是复用旧决定。
+v1 适合做复测、发现冲突和准备候选内容，但不能直接进入后续正式审批门禁。
+
+### v2
+
+`qiqi-curriculum-human-review-decision/v2` 会保存审核时的：
+
+- `sourceTaskId`
+- `title`
+- `reviewType`
+- `sourceRefs`
+- `allowedDecisions`
+
+v2 ingestion 会把这些字段与当前 caseState **逐项、按顺序比对**。任何一项变化都会返回 `CURRENT_CASE_STATE_MISMATCH`，要求重新核对当前 case。
+
+只有满足：
+
+1. caseState 完全一致；
+2. 基础 ingestion 通过；
+3. `accept_candidate` 等可直接执行的决定重新通过二次回归；
+
+才会得到 candidate snapshot v2，并出现 `readyForApprovalGate=true`。
+
+这仍然**不是** `humanVerified`，也不代表可以正式发布。
 
 ## 6. ingestion 接受条件
 
@@ -94,7 +121,20 @@ F005 不提供“接受自动改名”。必须区分：
 
 `accept_candidate` 还必须重新通过 `curriculumRepairRecheck` 才会生成 content candidate snapshot。
 
-## 7. 通过条件
+## 7. structured proposal 规则
+
+以下决定不会因为 v1/v2 合法就自动创建新数据：
+
+- `revise_candidate`
+- `split_nodes`
+- `rename_and_reframe`
+- `propose_curated_mapping`
+- `propose_curriculum_relation`
+- `split_identity_candidate`
+
+这些决定统一进入 `structured_proposal_required`。下一阶段会为它们分别定义内容 patch、ChangeSet、Assessment mapping、Curriculum relation 和 KnowledgeNode split schema。
+
+## 8. 通过条件
 
 一个 case 只有满足以下条件，才可以进入下一步系统复测：
 
@@ -105,4 +145,4 @@ F005 不提供“接受自动改名”。必须区分：
 - evidenceRefs 至少一条且是审核者实际查看过的证据；
 - 仍保持 `autoApply=false` 和 `humanVerified=false`。
 
-正式发布还需要后续内容版本、权利、课标映射和签名门禁，不因一次人工核对或一次 ingestion 自动开放。
+正式发布还需要后续内容版本、权利、课标映射和签名门禁，不因一次人工核对、一次 ingestion 或 `readyForApprovalGate=true` 自动开放。
