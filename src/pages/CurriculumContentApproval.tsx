@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   contentApprovalRepositoryStatus,
   prepareContentRegistrationRequest,
   type ContentRegistrationRequest,
 } from '../content/curriculum/contentApprovalPreparation'
+import {
+  CONTENT_APPROVAL_HANDOFF_STORAGE_KEY,
+  parseContentApprovalHandoff,
+} from '../content/curriculum/contentApprovalHandoff'
 import type { CurriculumSubject } from '../content/curriculum/curriculum'
 
 function parseLines(value: string) {
@@ -31,6 +35,30 @@ export default function CurriculumContentApproval() {
   const [preparedBy, setPreparedBy] = useState('')
   const [request, setRequest] = useState<ContentRegistrationRequest | null>(null)
   const [message, setMessage] = useState('')
+  const [hasHandoff, setHasHandoff] = useState(false)
+
+  useEffect(() => {
+    const raw = window.localStorage.getItem(CONTENT_APPROVAL_HANDOFF_STORAGE_KEY)
+    if (!raw) return
+    try {
+      const handoff = parseContentApprovalHandoff(raw)
+      setSnapshotText(JSON.stringify(handoff.snapshot, null, 2))
+      setCandidateId(handoff.candidateId)
+      setSubject(handoff.subject)
+      setEvidenceText(handoff.evidenceRefs.join('\n'))
+      setHasHandoff(true)
+      setMessage('已载入浏览器本地 handoff；仍需填写 datasetVersion、sourceCommit 和准备人。')
+    } catch (error) {
+      setHasHandoff(false)
+      setMessage(error instanceof Error ? `本地 handoff 无效：${error.message}` : '本地 handoff 无效')
+    }
+  }, [])
+
+  function clearHandoff() {
+    window.localStorage.removeItem(CONTENT_APPROVAL_HANDOFF_STORAGE_KEY)
+    setHasHandoff(false)
+    setMessage('已清除浏览器 handoff；不会影响任何仓库 candidate/approval。')
+  }
 
   function prepare() {
     try {
@@ -78,6 +106,8 @@ export default function CurriculumContentApproval() {
       <section className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 p-4 text-xs leading-6 text-amber-800">
         <strong>仓库当前门禁：</strong>{contentApprovalRepositoryStatus.blockers.length ? contentApprovalRepositoryStatus.blockers.join(' · ') : 'UI 镜像未发现基础 blocker'}。权威判断仍由 CI 中的 <code>scripts/curriculum-content-gate.mjs</code> 给出。
       </section>
+
+      {hasHandoff ? <section className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-xs leading-6 text-violet-800"><span><strong>连续审核 handoff 已载入：</strong>snapshot / candidateId / subject / evidence 已自动预填，未执行仓库登记。</span><button type="button" onClick={clearHandoff} className="rounded-full bg-white px-3 py-1.5 font-black text-violet-700">清除 handoff</button></section> : null}
 
       <section className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
         <main className="rounded-3xl bg-white p-5 shadow-sm">
