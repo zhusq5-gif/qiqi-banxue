@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { aiDiscoveryRegistrySummary } from '../content/curriculum/aiDiscoveryRegistry'
 import { aiDiscoveryCoverageSummary } from '../content/curriculum/aiDiscoveryCoverage'
+import { aiDiscoveryDomainCoverageSummary } from '../content/curriculum/aiDiscoveryDomainCoverage'
 import { curriculumHumanReviewSummary } from '../content/curriculum/humanReview'
 import { curriculumSeed } from '../content/curriculum/curriculum'
 
@@ -11,6 +12,20 @@ const lanes = [
     href: '/knowledge-map/discovery',
     metric: `${aiDiscoveryRegistrySummary.total} 条`,
     action: '进入 AI 候选池',
+  },
+  {
+    title: '领域深度搜索矩阵',
+    description: '按学科 × 年级 × 领域/任务群查看真正的搜索空白，下一批 AI 搜索优先补 search_required 和 shallow candidates。',
+    href: '/knowledge-map/discovery/domains',
+    metric: `${aiDiscoveryDomainCoverageSummary.searchRequiredCount} 个空白`,
+    action: '查看领域矩阵',
+  },
+  {
+    title: 'AI 候选真人精审队列',
+    description: 'AI候选点击“进入真人精审”后直接进入本地 case draft 队列，不再依赖人工导出/导入 JSON。',
+    href: '/knowledge-map/human-review/ai',
+    metric: 'UI队列',
+    action: '进入AI精审队列',
   },
   {
     title: '已登记问题真人核对',
@@ -68,8 +83,8 @@ export default function CurriculumReviewCenter() {
           ['现有语英种子', curriculumSeed.entries.length],
           ['AI候选', aiDiscoveryRegistrySummary.total],
           ['AI搜索最低覆盖', `${aiDiscoveryCoverageSummary.reviewReadyCount}/16`],
+          ['领域搜索空白', aiDiscoveryDomainCoverageSummary.searchRequiredCount],
           ['真人case', curriculumHumanReviewSummary.caseCount],
-          ['Blocking case', curriculumHumanReviewSummary.blockingCount],
           ['正式真人已核', curriculumHumanReviewSummary.humanVerifiedCount],
         ].map(([label, value]) => (
           <div key={label} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
@@ -80,7 +95,7 @@ export default function CurriculumReviewCenter() {
       </section>
 
       <section className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-6 text-amber-800">
-        <strong>当前正式状态：</strong>humanVerified = 0。AI“16/16最低覆盖”只表示每个学科年级已有至少3条候选可供 UI 审校，不代表知识库完整；accepted、recheck passed、readyForApprovalGate 都只是中间治理状态。
+        <strong>当前正式状态：</strong>humanVerified = 0。AI“16/16最低覆盖”只表示每个学科年级已有候选可供 UI 审校；领域矩阵仍有明确搜索空白，因此不能称为知识库完整。
       </section>
 
       <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -98,11 +113,12 @@ export default function CurriculumReviewCenter() {
 
       <section className="mt-5 rounded-3xl bg-stone-950 p-5 text-stone-100">
         <h2 className="font-black">推荐审核顺序</h2>
-        <div className="mt-3 grid gap-2 text-xs leading-6 text-stone-300 md:grid-cols-2 xl:grid-cols-4">
-          <div>1. AI 候选池：先筛来源与重复</div>
-          <div>2. 真人核对：给出教学语义决定</div>
-          <div>3. 当前 Case：生成 decision v2</div>
-          <div>4. 结构化提案/回归：进入内容审批门禁</div>
+        <div className="mt-3 grid gap-2 text-xs leading-6 text-stone-300 md:grid-cols-2 xl:grid-cols-5">
+          <div>1. 领域矩阵：找搜索空白</div>
+          <div>2. AI 候选池：核来源与重复</div>
+          <div>3. AI精审队列/真人核对</div>
+          <div>4. 当前 Case：decision v2</div>
+          <div>5. 结构化提案/回归 → 内容审批</div>
         </div>
       </section>
     </div>
