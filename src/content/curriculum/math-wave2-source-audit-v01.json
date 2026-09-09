@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "qiqi-math-wave2-source-audit/v1",
+  "checkedDate": "2026-09-09",
+  "source": {
+    "name": "K12-KGraph subject_specific_KG/math.json",
+    "rawUrl": "https://huggingface.co/datasets/lhpku20010120/K12-KGraph/raw/main/K12-KGraph/subject_specific_KG/math.json"
+  },
+  "rule": "excerpt 中缺少 tests_* 不能直接判定原始源缺失；必须先回查完整 raw source。没有 raw tests_* 证据时不得凭题意合成知识绑定。",
+  "records": [
+    {
+      "rawExerciseId": "math_4a_rjb_exe8",
+      "status": "excerpt_gap_repaired",
+      "rawNodeLocator": "math.json L6693-L6700",
+      "rawAppearsInLocator": "math.json L36207-L36211",
+      "rawTestsLocator": "math.json L65814-L65822",
+      "resolution": "补入 math_2a_rjb_cpt12（直角）与 raw tests_concept 边 fine-v4-wave2-e01。",
+      "note": "完整 raw source 明确存在 tests_concept；此前阻断项属于 excerpt 漏边，不是源数据缺失。"
+    },
+    {
+      "rawExerciseId": "math_4a_rjb_exe20",
+      "status": "source_unlinked_candidate",
+      "rawNodeLocator": "math.json L7134-L7142",
+      "rawAppearsInLocator": "math.json L36529-L36533",
+      "inspectedTestsRange": "math.json L65769-L66025",
+      "resolution": null,
+      "note": "完整 raw source 精确 ID 回查当前只确认 appears_in；G4 tests_* 连续区段从 exe19 跳到 exe26，未定位到 exe20 的 tests_concept/tests_skill。保持阻断候选，禁止依据题意自动补边。"
+    }
+  ]
+}
