@@ -50,7 +50,7 @@ function contentRegression(proposal: ContentRevisionProposal) {
   const checks = [
     check('source_entry_exists', Boolean(entry), entry ? `source=${entry.id}` : 'source entry missing'),
     check('source_identity_unchanged', Boolean(entry && issue && entry.id === issue.nodeId), '结构化内容修订只修改字段，不替换源节点 ID。'),
-    check('seed_mutation_performed', true, '回归仅生成候选对象；没有写回 curriculumSeed。'),
+    check('seed_immutable', true, '回归仅生成候选对象；没有写回 curriculumSeed。'),
   ]
   const derivedCandidate = entry ? {
     kind: 'content_revision_candidate',
@@ -100,7 +100,7 @@ function assessmentMappingRegression(proposal: AssessmentMappingProposal) {
     check('assessment_exists', Boolean(assessment), assessment ? assessment.id : 'assessment missing'),
     check('all_targets_exist', targets.every(Boolean), `${targets.filter(Boolean).length}/${targets.length} targets resolved`),
     check('curated_provenance_preserved', proposal.provenance === 'qiqi_curated_review', 'curated mapping 与 K12-KGraph raw tests_* 分层保存。'),
-    check('raw_edge_mutation_performed', true, '不会向 mathFineSample/K12-KGraph raw edge 集合写入 synthetic tests_*。'),
+    check('raw_edge_immutable', true, '不会向 mathFineSample/K12-KGraph raw edge 集合写入 synthetic tests_*。'),
   ]
   const derivedCandidate = assessment && targets.every(Boolean) ? {
     kind: 'curated_assessment_mapping_candidate',
