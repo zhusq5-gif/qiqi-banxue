@@ -199,6 +199,7 @@ function validateIdentitySplit(decision: HumanReviewDecisionV2, proposal: Identi
   const source = mathNormalizedNodeById(proposal.sourceKnowledgeNodeId)
   if (!source) return [...errors, 'IDENTITY_SPLIT_SOURCE_NODE_MISSING']
   const sourceOccurrenceIds = mathOccurrencesForNode(source.id).map((item) => item.id).sort()
+  if (sourceOccurrenceIds.length < 2) errors.push('IDENTITY_SPLIT_SOURCE_HAS_INSUFFICIENT_OCCURRENCES')
   if (proposal.proposedNodes.length < 2) errors.push('IDENTITY_SPLIT_REQUIRES_AT_LEAST_TWO_NODES')
   const tempIds = proposal.proposedNodes.map((item) => item.temporaryId)
   if (new Set(tempIds).size !== tempIds.length || tempIds.some((id) => !id.startsWith('candidate:'))) errors.push('IDENTITY_SPLIT_TEMP_IDS_INVALID')
