@@ -1,0 +1,5 @@
+{
+  "schema": "qiqi-curriculum-content-candidate-store/v1",
+  "candidates": [],
+  "note": "Only candidate snapshots that already passed the appropriate secondary regression may be deliberately registered here for formal content approval. Browser-local drafts are not automatically imported."
+}
