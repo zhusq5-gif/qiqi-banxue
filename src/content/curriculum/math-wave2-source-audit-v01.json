@@ -18,12 +18,12 @@
     },
     {
       "rawExerciseId": "math_4a_rjb_exe20",
-      "status": "source_unlinked_candidate",
+      "status": "source_unlinked_in_grade_tests_block",
       "rawNodeLocator": "math.json L7134-L7142",
       "rawAppearsInLocator": "math.json L36529-L36533",
       "inspectedTestsRange": "math.json L65769-L66025",
       "resolution": null,
-      "note": "完整 raw source 精确 ID 回查当前只确认 appears_in；G4 tests_* 连续区段从 exe19 跳到 exe26，未定位到 exe20 的 tests_concept/tests_skill。保持阻断候选，禁止依据题意自动补边。"
+      "note": "已核对四上连续 tests_* 关系块：相关记录从 exe19 跳至 exe26，未发现 exe20 的 tests_concept/tests_skill。当前只确认 appears_in；保持明确未映射。若真人依据教材意图建议绑定，只能作为 curated mapping proposal 进入后续审核层，不得改写为 K12-KGraph raw edge。"
     }
   ]
 }
