@@ -1,6 +1,6 @@
 # 课程知识体系 v0.3+：UI-first 真人审核 + AI Discovery 开发计划
 
-状态：2026-09-09 起生效。  
+状态：2026-09-09 更新。  
 适用分支：`feat/curriculum-knowledge-v03`。
 
 ## 一、核心原则
@@ -38,6 +38,8 @@ Activated AI Human Review Case
 new_knowledge_candidate
   ↓ secondary regression
 candidate snapshot v2
+  ↓ browser-local safe handoff
+content approval preparation
   ↓
 content registration request（UI准备包）
   ↓
@@ -72,17 +74,18 @@ curated release（仍需 standards / textbook / rights 等门禁）
 
 ## 三、AI Discovery 当前基线
 
-已完成四批：
+已完成五批：
 
 - Wave01：20 条；
 - Wave02：21 条；
 - Wave03：12 条领域缺口候选；
-- Wave04：8 条领域深度候选，重点补语文分学段书写能力、英语 G3/G4 phonics/reading/writing 与文化意识。
+- Wave04：8 条领域深度候选，重点补语文分学段书写能力、英语 G3/G4 phonics/reading/writing 与文化意识；
+- Wave05：13 条具体能力候选，重点补语文 G2–G5 的词句积累、阅读策略、表达与梳理，以及英语 G3/G5/G6 的语音、读写和听后复述活动。
 
-聚合 registry：**61 条 AI candidate**：
+聚合 registry：**74 条 AI candidate**：
 
-- 语文 29；
-- 英语 21；
+- 语文 37；
+- 英语 26；
 - 数学 11。
 
 16 个必核学科年级均已有最低候选池；该指标只表示“已有候选可审”，不是课程覆盖率。
@@ -101,7 +104,7 @@ curated release（仍需 standards / textbook / rights 等门禁）
 - `shallow_candidates`：仅 1 条；
 - `review_pool_ready`：至少 2 条。
 
-下一批搜索优先由 `search_required` 驱动，其次补 `shallow_candidates`，不再按总节点数优化。
+Wave05 已把一批语文阅读/表达/梳理和英语语音/读写/听说候选映射进领域矩阵，但矩阵仍保留真实空白。下一批继续优先 `search_required`，其次补 `shallow_candidates`，不按总节点数优化。
 
 ## 五、UI-first 审核现状
 
@@ -114,13 +117,17 @@ curated release（仍需 standards / textbook / rights 等门禁）
 - [x] `/knowledge-map/human-review/ai`：case activation、decision v2、new-knowledge可视化表单、duplicate disposition、secondary regression；
 - [x] current candidate/evidence 变化会使旧 case draft 失效；
 - [x] exact duplicate 阻断新增节点，semantic duplicate 继续交真人判断；
+- [x] AI 精审队列支持上一条/下一条、J/K 与方向键快捷导航，并显示当前进度；输入控件聚焦时快捷键自动停用；
+- [x] regression-passed AI candidate 可通过 browser-local safe handoff 一键带入 `/knowledge-map/content-approval`；
+- [x] Content Approval 自动预填 snapshot / candidateId / subject / evidence；仍需人工补 datasetVersion / sourceCommit / preparedBy；
+- [x] handoff 只接受 `readyForApprovalGate=true / autoApply=false / humanVerified=false` 的 snapshot，并可安全清除；
 - [x] 文件/JSON 降级为审计副本，不是正常流程必经步骤。
 
 ### 下一步
 
-- [ ] Review Center v2：连续单页工作流，不再把审核者带到多个页面；
-- [ ] 增加上一条/下一条、审核进度、键盘快捷键、决策历史；
-- [ ] regression-passed candidate snapshot 一键带入 content approval 页面，减少复制粘贴；
+- [ ] Review Center v2 继续收敛：审核历史、待办进度、caseState 失效可视化提醒；
+- [ ] Existing structured proposal 也接同一 Content Approval handoff，不只支持 AI new knowledge；
+- [ ] 增加可恢复的本地 decision/history ledger，页面刷新后仍能看到审校轨迹；
 - [ ] 批量只允许筛选/分派，禁止批量审核通过。
 
 ## 六、独立 Curriculum Content Approval Gate
@@ -135,16 +142,18 @@ curated release（仍需 standards / textbook / rights 等门禁）
 - `config/curriculum-content-reviewers.json`；
 - `approvals/curriculum-content-candidates.json`；
 - `approvals/curriculum-content-approvals.json`；
-- `/knowledge-map/content-approval` UI 登记准备页。
+- `/knowledge-map/content-approval` UI 登记准备页；
+- `contentApprovalHandoff.ts` 浏览器本地安全交接协议。
 
 规则：
 
 1. 只有 `readyForApprovalGate=true / autoApply=false / humanVerified=false` 的 regression-passed snapshot 才可准备登记；
-2. UI 只生成 `qiqi-curriculum-content-registration-request/v1`，状态固定 `browser_preparation_only`；
-3. 正式 candidate 必须由维护者显式执行 register script；
-4. reviewer 必须线下核验，仓库只登记 Ed25519 公钥；私钥永不进入仓库或浏览器；
-5. approval 绑定 formal candidate 的 canonical SHA-256；candidate 内容、证据或版本变化后旧 approval 自动失效；
-6. content gate 与 standards gate 独立，任一通过都不能替代另一个。
+2. 浏览器 handoff 与 UI 都不会注册正式 candidate，也不会生成签名；
+3. UI 只生成 `qiqi-curriculum-content-registration-request/v1`，状态固定 `browser_preparation_only`；
+4. 正式 candidate 必须由维护者显式执行 register script；
+5. reviewer 必须线下核验，仓库只登记 Ed25519 公钥；私钥永不进入仓库或浏览器；
+6. approval 绑定 formal candidate 的 canonical SHA-256；candidate 内容、证据或版本变化后旧 approval 自动失效；
+7. content gate 与 standards gate 独立，任一通过都不能替代另一个。
 
 当前真实状态故意保持：
 
@@ -155,24 +164,26 @@ curated release（仍需 standards / textbook / rights 等门禁）
 
 ## 七、下一阶段优先级
 
-### P0 — Wave05 领域缺口搜索
+### P0 — Wave06 领域缺口搜索
 
-- 根据 domain search queue 自动形成搜索任务；
-- 语文：优先补阅读鉴赏、表达交流、梳理探究的分学段具体证据；
-- 英语：优先补 phonics / culture / reading / writing 的年级颗粒度；
-- 数学：继续把 K12-KGraph raw Concept/Skill/Exercise/Assessment/Relation 和2022具体条款纳入四领域深度矩阵；
+- 根据当前 domain search queue 继续补 `search_required / shallow_candidates`；
+- 语文：继续补实用性阅读、思辨阅读、整本书、跨学科学习等年级颗粒度证据，避免只靠任务群框架锚点；
+- 英语：继续补 culture / phonics / reading / writing 的具体年级证据，尤其区分活动存在与具体语言项目；
+- 数学：优先扩大 K12-KGraph raw Concept/Skill/Exercise/Assessment/Relation，并把2022课标具体条款接入四领域深度矩阵；
 - 每批仍先进入 AI candidate pool，再走 UI 真人审校。
 
 ### P0 — Review Center v2
 
-- 队列 → 证据 → 决定 → current case → proposal/regression → content approval preparation 连续化；
-- 增加快捷键、进度、历史、caseState 失效提示；
+- decision/history ledger；
+- caseState 失效提示；
+- existing structured proposal → Content Approval handoff；
+- 统一待办数量/完成度显示；
 - 不增加“批量审核通过”。
 
 ### P1 — 第一次真实候选登记演练
 
 - 使用一个**真实 UI 审核并 secondary-regression-passed**的候选；
-- 生成 registration request；
+- 通过 handoff 生成 registration request；
 - 维护者执行 register script；
 - 可以登记 formal candidate，但不得伪造 reviewer、公钥或签名。
 
@@ -194,9 +205,10 @@ curated release（仍需 standards / textbook / rights 等门禁）
 当前最新 CI：
 
 - Node 24 / production build ✅
-- **29 test files / 151 tests passed** ✅
-- AI discovery / domain coverage / promotion / activation / new knowledge regression ✅
-- content approval preparation ✅
+- **30 test files / 156 tests passed** ✅
+- AI discovery / Wave05 registry / subject-grade coverage / domain coverage ✅
+- AI promotion / activation / new knowledge regression ✅
+- Content Approval preparation + browser handoff safety ✅
 - standards Ed25519 gate self-test + tamper rejection ✅
 - content Ed25519 gate self-test + tamper rejection + candidate-change invalidation ✅
 - standards gate 60 mappings blocked as expected ✅
