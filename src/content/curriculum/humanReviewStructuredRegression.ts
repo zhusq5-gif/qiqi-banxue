@@ -39,8 +39,38 @@ export interface StructuredRegressionResult {
   nextGate: 'curriculum_content_approval_gate' | 'proposal_revision_required'
 }
 
+export interface DirectedEdgeForCycleCheck {
+  from: string
+  to: string
+}
+
 function check(id: string, passed: boolean, detail: string): StructuredRegressionCheck {
   return { id, passed, detail }
+}
+
+export function directedEdgesHaveCycle(edges: DirectedEdgeForCycleCheck[]) {
+  const graph = new Map<string, Set<string>>()
+  for (const edge of edges) {
+    if (!graph.has(edge.from)) graph.set(edge.from, new Set())
+    graph.get(edge.from)!.add(edge.to)
+  }
+  const visiting = new Set<string>()
+  const visited = new Set<string>()
+  function visit(node: string): boolean {
+    if (visiting.has(node)) return true
+    if (visited.has(node)) return false
+    visiting.add(node)
+    for (const next of graph.get(node) ?? []) {
+      if (visit(next)) return true
+    }
+    visiting.delete(node)
+    visited.add(node)
+    return false
+  }
+  for (const node of graph.keys()) {
+    if (visit(node)) return true
+  }
+  return false
 }
 
 function contentRegression(proposal: ContentRevisionProposal) {
@@ -113,45 +143,16 @@ function assessmentMappingRegression(proposal: AssessmentMappingProposal) {
   return { checks, derivedCandidate }
 }
 
-function prerequisiteGraphWithCandidate(proposal: CurriculumRelationProposal) {
-  const graph = new Map<string, Set<string>>()
-  for (const relation of mathNormalizedDataset.relations) {
-    if (relation.relationType !== 'prerequisites_for') continue
-    if (!graph.has(relation.fromKnowledgeNodeId)) graph.set(relation.fromKnowledgeNodeId, new Set())
-    graph.get(relation.fromKnowledgeNodeId)!.add(relation.toKnowledgeNodeId)
-  }
-  if (proposal.relationType === 'prerequisite_for') {
-    if (!graph.has(proposal.fromKnowledgeNodeId)) graph.set(proposal.fromKnowledgeNodeId, new Set())
-    graph.get(proposal.fromKnowledgeNodeId)!.add(proposal.toKnowledgeNodeId)
-  }
-  return graph
-}
-
-function graphHasCycle(graph: Map<string, Set<string>>) {
-  const visiting = new Set<string>()
-  const visited = new Set<string>()
-  function visit(node: string): boolean {
-    if (visiting.has(node)) return true
-    if (visited.has(node)) return false
-    visiting.add(node)
-    for (const next of graph.get(node) ?? []) {
-      if (visit(next)) return true
-    }
-    visiting.delete(node)
-    visited.add(node)
-    return false
-  }
-  for (const node of graph.keys()) {
-    if (visit(node)) return true
-  }
-  return false
-}
-
 function curriculumRelationRegression(proposal: CurriculumRelationProposal) {
   const from = mathNormalizedNodeById(proposal.fromKnowledgeNodeId)
   const to = mathNormalizedNodeById(proposal.toKnowledgeNodeId)
-  const graph = prerequisiteGraphWithCandidate(proposal)
-  const cycleFree = proposal.relationType !== 'prerequisite_for' || !graphHasCycle(graph)
+  const prerequisiteEdges: DirectedEdgeForCycleCheck[] = mathNormalizedDataset.relations
+    .filter((relation) => relation.relationType === 'prerequisites_for')
+    .map((relation) => ({ from: relation.fromKnowledgeNodeId, to: relation.toKnowledgeNodeId }))
+  if (proposal.relationType === 'prerequisite_for') {
+    prerequisiteEdges.push({ from: proposal.fromKnowledgeNodeId, to: proposal.toKnowledgeNodeId })
+  }
+  const cycleFree = proposal.relationType !== 'prerequisite_for' || !directedEdgesHaveCycle(prerequisiteEdges)
   const checks = [
     check('relation_endpoints_exist', Boolean(from && to), `${Boolean(from)} / ${Boolean(to)}`),
     check('supporting_evidence_present', proposal.supportingRawRefs.length > 0, `${proposal.supportingRawRefs.length} raw refs`),
