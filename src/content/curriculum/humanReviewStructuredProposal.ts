@@ -1,4 +1,4 @@
-import { entryById } from './curriculum'
+import { curriculumSeed, entryById } from './curriculum'
 import { createRepairRecheckBundle, type RepairDraftInput } from './curriculumRepairRecheck'
 import { humanReviewCaseById } from './humanReview'
 import { type HumanReviewDecisionV2 } from './humanReviewDecisionV2'
@@ -126,9 +126,9 @@ function validateContentRevision(decision: HumanReviewDecisionV2, proposal: Cont
   const errors: string[] = []
   const issueId = /^human-review:(F\d{3})$/.exec(decision.caseId)?.[1] ?? null
   if (!issueId) return ['CONTENT_REVISION_REQUIRES_CONTENT_ISSUE_CASE']
-  const reviewCase = humanReviewCaseById(decision.caseId)
-  const sourceNodeId = reviewCase ? /^human-review:(F\d{3})$/.test(reviewCase.id) : false
-  if (!sourceNodeId) errors.push('CONTENT_SOURCE_CASE_INVALID')
+  const issue = curriculumSeed.issues.find((item) => item.id === issueId)
+  const sourceEntry = issue ? entryById(issue.nodeId) : null
+  if (!issue || !sourceEntry) errors.push('CONTENT_SOURCE_ENDPOINT_MISSING')
 
   if (decision.decision === 'revise_candidate') {
     const recheck = createRepairRecheckBundle(issueId, proposal.proposed)
@@ -136,11 +136,8 @@ function validateContentRevision(decision: HumanReviewDecisionV2, proposal: Cont
     if (!recheck.checks.candidateScopeRespected) errors.push('CONTENT_REVISION_OUTSIDE_ALLOWED_FIELDS')
     if (!recheck.checks.sourceEndpointExists) errors.push('CONTENT_SOURCE_ENDPOINT_MISSING')
   } else if (decision.decision === 'rename_and_reframe') {
-    const issue = humanReviewCaseById(decision.caseId)
-    const nodeId = issue?.id === 'human-review:F005' ? 'provisional:csf:chinese:g4:s1:u6:k3' : null
-    const entry = nodeId ? entryById(nodeId) : null
-    if (!entry) errors.push('RENAME_REFRAME_SOURCE_NODE_MISSING')
-    if (entry && proposal.proposed.proposedLabel === entry.label && proposal.proposed.proposedLearningDemand === entry.learningDemand) {
+    if (issueId !== 'F005') errors.push('RENAME_REFRAME_CURRENTLY_RESTRICTED_TO_F005')
+    if (sourceEntry && proposal.proposed.proposedLabel === sourceEntry.label && proposal.proposed.proposedLearningDemand === sourceEntry.learningDemand) {
       errors.push('RENAME_REFRAME_MUST_CHANGE_LABEL_OR_DEMAND')
     }
   }
@@ -150,6 +147,8 @@ function validateContentRevision(decision: HumanReviewDecisionV2, proposal: Cont
 function validateConceptSplit(decision: HumanReviewDecisionV2, proposal: ConceptSplitProposal) {
   const errors: string[] = []
   if (decision.caseId !== 'human-review:F005') errors.push('CONCEPT_SPLIT_CURRENTLY_RESTRICTED_TO_F005')
+  const issue = curriculumSeed.issues.find((item) => item.id === 'F005')
+  if (!issue || proposal.sourceNodeId !== issue.nodeId) errors.push('CONCEPT_SPLIT_SOURCE_NODE_MISMATCH')
   const source = entryById(proposal.sourceNodeId)
   if (!source) errors.push('CONCEPT_SPLIT_SOURCE_NODE_MISSING')
   if (proposal.proposedNodes.length < 2) errors.push('CONCEPT_SPLIT_REQUIRES_AT_LEAST_TWO_NODES')
@@ -163,8 +162,15 @@ function validateConceptSplit(decision: HumanReviewDecisionV2, proposal: Concept
   return errors
 }
 
-function validateAssessmentMapping(proposal: AssessmentMappingProposal) {
+function validateAssessmentMapping(decision: HumanReviewDecisionV2, proposal: AssessmentMappingProposal) {
   const errors: string[] = []
+  const reviewCase = humanReviewCaseById(decision.caseId)
+  if (!reviewCase || reviewCase.reviewType !== 'assessment_binding') errors.push('ASSESSMENT_MAPPING_CASE_TYPE_INVALID')
+  const caseMatchesExercise = Boolean(reviewCase && (
+    reviewCase.sourceTaskId.includes(proposal.rawExerciseId)
+    || reviewCase.sourceRefs.some((ref) => ref.includes(proposal.rawExerciseId))
+  ))
+  if (!caseMatchesExercise) errors.push('ASSESSMENT_MAPPING_EXERCISE_CASE_MISMATCH')
   const assessment = mathNormalizedDataset.assessmentTasks.find((item) => item.rawExerciseId === proposal.rawExerciseId)
   if (!assessment) errors.push('ASSESSMENT_MAPPING_EXERCISE_NOT_FOUND')
   if (!nonEmptyStrings(proposal.targetKnowledgeNodeIds)) errors.push('ASSESSMENT_MAPPING_TARGET_REQUIRED')
@@ -173,19 +179,25 @@ function validateAssessmentMapping(proposal: AssessmentMappingProposal) {
   return errors
 }
 
-function validateCurriculumRelation(proposal: CurriculumRelationProposal) {
+function validateCurriculumRelation(decision: HumanReviewDecisionV2, proposal: CurriculumRelationProposal) {
   const errors: string[] = []
+  const reviewCase = humanReviewCaseById(decision.caseId)
+  if (!reviewCase || reviewCase.reviewType !== 'cross_grade_relation') errors.push('CURRICULUM_RELATION_CASE_TYPE_INVALID')
   if (!mathNormalizedNodeById(proposal.fromKnowledgeNodeId) || !mathNormalizedNodeById(proposal.toKnowledgeNodeId)) errors.push('CURRICULUM_RELATION_ENDPOINT_MISSING')
   if (proposal.fromKnowledgeNodeId === proposal.toKnowledgeNodeId) errors.push('CURRICULUM_RELATION_SELF_LOOP')
   if (!nonEmptyStrings(proposal.supportingRawRefs)) errors.push('CURRICULUM_RELATION_SUPPORT_REQUIRED')
+  if (reviewCase && !proposal.supportingRawRefs.some((ref) => reviewCase.sourceRefs.includes(ref))) errors.push('CURRICULUM_RELATION_SUPPORT_CASE_MISMATCH')
   if (proposal.provenance !== 'qiqi_curated_review') errors.push('CURRICULUM_RELATION_PROVENANCE_INVALID')
   return errors
 }
 
-function validateIdentitySplit(proposal: IdentitySplitProposal) {
+function validateIdentitySplit(decision: HumanReviewDecisionV2, proposal: IdentitySplitProposal) {
   const errors: string[] = []
+  const reviewCase = humanReviewCaseById(decision.caseId)
+  if (!reviewCase || reviewCase.reviewType !== 'occurrence_reuse') errors.push('IDENTITY_SPLIT_CASE_TYPE_INVALID')
+  if (reviewCase && !reviewCase.sourceRefs.includes(proposal.sourceKnowledgeNodeId)) errors.push('IDENTITY_SPLIT_SOURCE_CASE_MISMATCH')
   const source = mathNormalizedNodeById(proposal.sourceKnowledgeNodeId)
-  if (!source) return ['IDENTITY_SPLIT_SOURCE_NODE_MISSING']
+  if (!source) return [...errors, 'IDENTITY_SPLIT_SOURCE_NODE_MISSING']
   const sourceOccurrenceIds = mathOccurrencesForNode(source.id).map((item) => item.id).sort()
   if (proposal.proposedNodes.length < 2) errors.push('IDENTITY_SPLIT_REQUIRES_AT_LEAST_TWO_NODES')
   const tempIds = proposal.proposedNodes.map((item) => item.temporaryId)
@@ -206,9 +218,9 @@ export function validateHumanReviewStructuredProposal(
   if (errors.length === 0) {
     if (proposal.kind === 'content_revision') errors.push(...validateContentRevision(decision, proposal))
     if (proposal.kind === 'concept_split') errors.push(...validateConceptSplit(decision, proposal))
-    if (proposal.kind === 'assessment_mapping') errors.push(...validateAssessmentMapping(proposal))
-    if (proposal.kind === 'curriculum_relation') errors.push(...validateCurriculumRelation(proposal))
-    if (proposal.kind === 'identity_split') errors.push(...validateIdentitySplit(proposal))
+    if (proposal.kind === 'assessment_mapping') errors.push(...validateAssessmentMapping(decision, proposal))
+    if (proposal.kind === 'curriculum_relation') errors.push(...validateCurriculumRelation(decision, proposal))
+    if (proposal.kind === 'identity_split') errors.push(...validateIdentitySplit(decision, proposal))
   }
 
   if (errors.length > 0) {
