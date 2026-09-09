@@ -25,7 +25,7 @@ describe('wave 2 math verification', () => {
   it('keeps math item screening separate from blocking and review audit tasks', () => {
     expect(verificationItemsForGradeWave2('math', 4).every((item) => item.status === 'automated_screened')).toBe(true)
     expect(verificationItemsForGradeWave2('math', 5).every((item) => item.status === 'automated_screened')).toBe(true)
-    expect(mathWave2AuditTasks.filter((task) => task.kind === 'assessment_without_target')).toHaveLength(1)
+    expect(mathWave2AuditTasks.filter((task) => task.kind === 'source_unlinked_assessment_candidate')).toHaveLength(1)
     expect(mathWave2AuditTasks.some((task) => task.id === 'math-audit:g4:assessment:math_4a_rjb_exe20' && task.severity === 'blocking')).toBe(true)
     expect(mathWave2AuditTasks.some((task) => task.kind === 'cross_grade_relation_review' && task.severity === 'review')).toBe(true)
   })
