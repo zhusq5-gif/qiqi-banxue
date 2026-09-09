@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { aiDiscoveryRegistrySummary } from '../content/curriculum/aiDiscoveryRegistry'
 import { aiDiscoveryCoverageSummary } from '../content/curriculum/aiDiscoveryCoverage'
 import { aiDiscoveryDomainCoverageSummary } from '../content/curriculum/aiDiscoveryDomainCoverage'
+import { contentApprovalRepositoryStatus } from '../content/curriculum/contentApprovalPreparation'
 import { curriculumHumanReviewSummary } from '../content/curriculum/humanReview'
 import { curriculumSeed } from '../content/curriculum/curriculum'
 
@@ -56,6 +57,13 @@ const lanes = [
     action: '进入提案工作台',
   },
   {
+    title: '内容审批准备',
+    description: '把 regression-passed candidate snapshot 转成仓库登记准备包；浏览器不注册正式 candidate、不持有私钥、不生成签名。',
+    href: '/knowledge-map/content-approval',
+    metric: `${contentApprovalRepositoryStatus.blockers.length} 个门禁 blocker`,
+    action: '准备内容审批',
+  },
+  {
     title: '旧 v1 决定兼容导入',
     description: '仅用于历史/外部 decision v1 的兼容接收与冲突检查。v1 不能进入正式审批。',
     href: '/knowledge-map/human-review/ingest',
@@ -95,7 +103,7 @@ export default function CurriculumReviewCenter() {
       </section>
 
       <section className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-6 text-amber-800">
-        <strong>当前正式状态：</strong>humanVerified = 0。AI“16/16最低覆盖”只表示每个学科年级已有候选可供 UI 审校；领域矩阵仍有明确搜索空白，因此不能称为知识库完整。
+        <strong>当前正式状态：</strong>humanVerified = 0；content approval repository 当前 {contentApprovalRepositoryStatus.registeredCandidates} 个登记候选、{contentApprovalRepositoryStatus.registeredContentReviewers} 个可信 reviewer。AI“16/16最低覆盖”只表示已有候选可供 UI 审校，不能称为知识库完整。
       </section>
 
       <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -113,12 +121,13 @@ export default function CurriculumReviewCenter() {
 
       <section className="mt-5 rounded-3xl bg-stone-950 p-5 text-stone-100">
         <h2 className="font-black">推荐审核顺序</h2>
-        <div className="mt-3 grid gap-2 text-xs leading-6 text-stone-300 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-3 grid gap-2 text-xs leading-6 text-stone-300 md:grid-cols-2 xl:grid-cols-6">
           <div>1. 领域矩阵：找搜索空白</div>
           <div>2. AI 候选池：核来源与重复</div>
           <div>3. AI精审队列/真人核对</div>
           <div>4. 当前 Case：decision v2</div>
-          <div>5. 结构化提案/回归 → 内容审批</div>
+          <div>5. 结构化提案/回归</div>
+          <div>6. 内容审批准备 → 仓库登记/签名</div>
         </div>
       </section>
     </div>
