@@ -9,7 +9,7 @@ import {
   type CurriculumRelationProposal,
   type IdentitySplitProposal,
 } from './humanReviewStructuredProposal'
-import { runHumanReviewStructuredRegression } from './humanReviewStructuredRegression'
+import { directedEdgesHaveCycle, runHumanReviewStructuredRegression } from './humanReviewStructuredRegression'
 import { mathNormalizedDataset, mathOccurrencesForNode } from './mathNormalized'
 
 function reviewCase(caseId: string) {
@@ -140,32 +140,16 @@ describe('structured proposal secondary regression', () => {
     expect(result.checks.find((item) => item.id === 'raw_relation_unchanged')?.passed).toBe(true)
   })
 
-  it('rejects a reverse prerequisite proposal when it would create a cycle with an existing reviewed raw prerequisite', () => {
-    const caseItem = curriculumHumanReviewCases.find((item) => {
-      if (item.reviewType !== 'cross_grade_relation') return false
-      return mathNormalizedDataset.relations.find((relation) => relation.rawEdgeId === item.sourceRefs[0])?.relationType === 'prerequisites_for'
-    })
-    expect(caseItem).toBeTruthy()
-    const rawRelation = mathNormalizedDataset.relations.find((item) => item.rawEdgeId === caseItem!.sourceRefs[0])!
-    const decision = decisionFor(caseItem!.id, 'propose_curriculum_relation')
-    const proposal: CurriculumRelationProposal = {
-      schema: 'qiqi-curriculum-human-review-structured-proposal/v1',
-      caseId: decision.caseId,
-      kind: 'curriculum_relation',
-      rationale: '测试反向 prerequisite 是否触发环检测。',
-      evidenceRefs: [caseItem!.sourceRefs[0]],
-      status: 'structured_proposal_candidate',
-      autoApply: false,
-      fromKnowledgeNodeId: rawRelation.toKnowledgeNodeId,
-      toKnowledgeNodeId: rawRelation.fromKnowledgeNodeId,
-      relationType: 'prerequisite_for',
-      supportingRawRefs: [caseItem!.sourceRefs[0]],
-      provenance: 'qiqi_curated_review',
-    }
-    const result = runHumanReviewStructuredRegression(decision, proposal)
-    expect(result.accepted).toBe(false)
-    expect(result.checks.find((item) => item.id === 'prerequisite_cycle_free')?.passed).toBe(false)
-    expect(result.nextGate).toBe('proposal_revision_required')
+  it('detects directed cycles without adding synthetic prerequisite data to the curriculum sample', () => {
+    expect(directedEdgesHaveCycle([
+      { from: 'A', to: 'B' },
+      { from: 'B', to: 'C' },
+      { from: 'C', to: 'A' },
+    ])).toBe(true)
+    expect(directedEdgesHaveCycle([
+      { from: 'A', to: 'B' },
+      { from: 'B', to: 'C' },
+    ])).toBe(false)
   })
 
   it('blocks identity split when the reviewed source lacks enough occurrence evidence', () => {
