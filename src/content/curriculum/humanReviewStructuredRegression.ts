@@ -146,6 +146,14 @@ function assessmentMappingRegression(proposal: AssessmentMappingProposal) {
 function curriculumRelationRegression(proposal: CurriculumRelationProposal) {
   const from = mathNormalizedNodeById(proposal.fromKnowledgeNodeId)
   const to = mathNormalizedNodeById(proposal.toKnowledgeNodeId)
+  const supportingRawRelation = mathNormalizedDataset.relations.find((relation) => (
+    proposal.supportingRawRefs.includes(relation.rawEdgeId)
+    || proposal.supportingRawRefs.includes(relation.source.sourceLocator)
+  ))
+  const reviewedPairPreserved = Boolean(supportingRawRelation && (
+    (supportingRawRelation.fromKnowledgeNodeId === proposal.fromKnowledgeNodeId && supportingRawRelation.toKnowledgeNodeId === proposal.toKnowledgeNodeId)
+    || (supportingRawRelation.fromKnowledgeNodeId === proposal.toKnowledgeNodeId && supportingRawRelation.toKnowledgeNodeId === proposal.fromKnowledgeNodeId)
+  ))
   const prerequisiteEdges: DirectedEdgeForCycleCheck[] = mathNormalizedDataset.relations
     .filter((relation) => relation.relationType === 'prerequisites_for')
     .map((relation) => ({ from: relation.fromKnowledgeNodeId, to: relation.toKnowledgeNodeId }))
@@ -156,10 +164,11 @@ function curriculumRelationRegression(proposal: CurriculumRelationProposal) {
   const checks = [
     check('relation_endpoints_exist', Boolean(from && to), `${Boolean(from)} / ${Boolean(to)}`),
     check('supporting_evidence_present', proposal.supportingRawRefs.length > 0, `${proposal.supportingRawRefs.length} raw refs`),
+    check('reviewed_relation_pair_preserved', reviewedPairPreserved, reviewedPairPreserved ? 'candidate uses the same reviewed KnowledgeNode pair' : 'supporting raw relation does not match candidate endpoints'),
     check('raw_relation_unchanged', true, '候选 Curriculum relation 是新增 curated 层，不覆盖 raw relation type/evidence。'),
     check('prerequisite_cycle_free', cycleFree, cycleFree ? 'candidate prerequisite graph is acyclic' : 'candidate would create a prerequisite cycle'),
   ]
-  const derivedCandidate = from && to && cycleFree ? {
+  const derivedCandidate = from && to && reviewedPairPreserved && cycleFree ? {
     kind: 'curriculum_relation_candidate',
     fromKnowledgeNodeId: from.id,
     toKnowledgeNodeId: to.id,
