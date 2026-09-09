@@ -6,6 +6,7 @@ import {
   curriculumRepairTasks,
   curriculumVerificationPolicy,
   curriculumVerificationSummary,
+  verificationItemsForGrade,
   type ContentVerificationStatus,
   type GradeVerificationRow,
   type VerificationWave,
@@ -19,7 +20,7 @@ const contentStatusLabel: Record<ContentVerificationStatus, string> = {
   recheck_pending: '修补后待复测',
 }
 
-function RowCard({ row }: { row: GradeVerificationRow }) {
+function RowCard({ row, onInspect }: { row: GradeVerificationRow; onInspect: (id: string) => void }) {
   const hasFindings = row.automatedStatus === 'passed_with_findings'
   return (
     <article className="rounded-2xl border border-stone-100 bg-white p-4 shadow-sm">
@@ -48,6 +49,7 @@ function RowCard({ row }: { row: GradeVerificationRow }) {
         来源缺失 {row.missingSourceCount} · 规范化重名 {row.normalizedDuplicateLabelCount} · 未解析测评端点 {row.unresolvedAssessmentTargetCount}
       </div>
       <div className="mt-1 text-[10px] font-black text-rose-500">真人学科复核：未开始</div>
+      <button type="button" onClick={() => onInspect(row.id)} className="mt-3 rounded-full bg-stone-900 px-3 py-1.5 text-xs font-black text-white">查看逐条台账</button>
     </article>
   )
 }
@@ -55,12 +57,16 @@ function RowCard({ row }: { row: GradeVerificationRow }) {
 export default function CurriculumVerification() {
   const [subject, setSubject] = useState<'all' | CurriculumSubject>('all')
   const [wave, setWave] = useState<'all' | VerificationWave>('all')
+  const [selectedRowId, setSelectedRowId] = useState('verify:chinese:1')
 
   const rows = useMemo(() => curriculumGradeVerificationRows.filter((row) => {
     if (subject !== 'all' && row.subject !== subject) return false
     if (wave !== 'all' && row.wave !== wave) return false
     return true
   }), [subject, wave])
+
+  const selectedRow = rows.find((row) => row.id === selectedRowId) ?? rows[0] ?? null
+  const selectedItems = selectedRow ? verificationItemsForGrade(selectedRow.subject, selectedRow.grade) : []
 
   return (
     <div className="mx-auto min-h-full max-w-7xl px-4 pb-20 pt-5">
@@ -78,11 +84,11 @@ export default function CurriculumVerification() {
       <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-6">
         {[
           ['必核年级单元', curriculumVerificationSummary.rowCount],
-          ['自动检查完成', curriculumVerificationSummary.automatedCheckedRows],
-          ['第一波已执行', curriculumVerificationSummary.wave1ExecutedRows],
+          ['逐条核对台账', curriculumVerificationSummary.itemCount],
+          ['第一波逐条首筛', curriculumVerificationSummary.wave1ScreenedItems],
           ['有发现年级', curriculumVerificationSummary.rowsWithFindings],
           ['修补任务', curriculumVerificationSummary.repairTaskCount],
-          ['真人已核', curriculumVerificationSummary.humanVerifiedRows],
+          ['真人已核', curriculumVerificationSummary.humanVerifiedItems],
         ].map(([label, value]) => (
           <div key={label} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
             <div className="text-2xl font-black text-stone-900">{value}</div>
@@ -120,14 +126,41 @@ export default function CurriculumVerification() {
       </div>
 
       <section className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {rows.map((row) => <RowCard key={row.id} row={row} />)}
+        {rows.map((row) => <RowCard key={row.id} row={row} onInspect={setSelectedRowId} />)}
       </section>
+
+      {selectedRow ? (
+        <section className="mt-6 rounded-3xl bg-white p-5 shadow">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <div className="text-xs font-black text-violet-600">逐条核对台账 · Wave {selectedRow.wave}</div>
+              <h2 className="mt-1 text-lg font-black text-stone-900">{subjectLabels[selectedRow.subject]} · {selectedRow.grade}年级</h2>
+              <p className="mt-1 text-xs text-stone-400">{selectedItems.length} 条 occurrence 级记录；每条均保留来源引用、年级绑定、问题关联与真人复核状态。</p>
+            </div>
+            <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-black text-rose-700">human verified = 0</span>
+          </div>
+          <div className="mt-4 max-h-[620px] overflow-y-auto rounded-2xl border border-stone-100">
+            {selectedItems.map((item) => (
+              <article key={item.id} className="grid gap-2 border-b border-stone-100 px-4 py-3 last:border-b-0 md:grid-cols-[minmax(0,1fr)_130px_120px] md:items-center">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-black text-stone-900">{item.label}</div>
+                  <code className="mt-1 block truncate text-[10px] text-stone-400">{item.knowledgeId}</code>
+                  <div className="mt-1 truncate text-[10px] text-stone-400">{item.sourceRef}</div>
+                  {item.registeredIssueIds.length ? <div className="mt-1 text-[10px] font-black text-rose-600">问题：{item.registeredIssueIds.join('、')}</div> : null}
+                </div>
+                <span className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-black ${item.status === 'needs_patch' ? 'bg-amber-100 text-amber-700' : item.status === 'automated_screened' ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-100 text-stone-500'}`}>{item.status}</span>
+                <span className="text-[10px] font-black text-rose-500">真人：未开始</span>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-6 rounded-3xl bg-white p-5 shadow">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-lg font-black text-stone-900">修补任务队列</h2>
-            <p className="mt-1 text-xs text-stone-400">修补建议不会自动写回种子数据；完成后必须再次逐年级复测。</p>
+            <p className="mt-1 text-xs text-stone-400">修补建议不会自动写回种子数据；完成后必须再次逐年级、逐知识点复测。</p>
           </div>
           <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-700">第一波建议 {curriculumVerificationSummary.patchProposedCount} 条</span>
         </div>
