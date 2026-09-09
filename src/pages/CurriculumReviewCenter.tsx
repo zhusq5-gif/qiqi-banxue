@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { aiDiscoverySummary } from '../content/curriculum/aiDiscovery'
+import { aiDiscoveryRegistrySummary } from '../content/curriculum/aiDiscoveryRegistry'
+import { aiDiscoveryCoverageSummary } from '../content/curriculum/aiDiscoveryCoverage'
 import { curriculumHumanReviewSummary } from '../content/curriculum/humanReview'
 import { curriculumSeed } from '../content/curriculum/curriculum'
 
@@ -8,7 +9,7 @@ const lanes = [
     title: 'AI 候选审校',
     description: '查看 AI 搜索生成的带来源候选，检查置信度与重复命中，再决定进入真人精审、修订、拒绝或暂缓。',
     href: '/knowledge-map/discovery',
-    metric: `${aiDiscoverySummary.total} 条`,
+    metric: `${aiDiscoveryRegistrySummary.total} 条`,
     action: '进入 AI 候选池',
   },
   {
@@ -62,10 +63,11 @@ export default function CurriculumReviewCenter() {
         </div>
       </header>
 
-      <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-5">
+      <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-6">
         {[
           ['现有语英种子', curriculumSeed.entries.length],
-          ['AI候选', aiDiscoverySummary.total],
+          ['AI候选', aiDiscoveryRegistrySummary.total],
+          ['AI搜索最低覆盖', `${aiDiscoveryCoverageSummary.reviewReadyCount}/16`],
           ['真人case', curriculumHumanReviewSummary.caseCount],
           ['Blocking case', curriculumHumanReviewSummary.blockingCount],
           ['正式真人已核', curriculumHumanReviewSummary.humanVerifiedCount],
@@ -78,7 +80,7 @@ export default function CurriculumReviewCenter() {
       </section>
 
       <section className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs leading-6 text-amber-800">
-        <strong>当前正式状态：</strong>humanVerified = 0。UI 中出现的 accepted、recheck passed、readyForApprovalGate 都只是中间治理状态，不等于正式发布批准。
+        <strong>当前正式状态：</strong>humanVerified = 0。AI“16/16最低覆盖”只表示每个学科年级已有至少3条候选可供 UI 审校，不代表知识库完整；accepted、recheck passed、readyForApprovalGate 都只是中间治理状态。
       </section>
 
       <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
