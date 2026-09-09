@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { curriculumSeed } from './curriculum'
 import { mathNormalizedDataset } from './mathNormalized'
 import {
+  curriculumCoverageTasks,
   curriculumGradeVerificationRows,
   curriculumKnowledgeVerificationItems,
   curriculumRepairTasks,
@@ -91,14 +92,26 @@ describe('subject-grade curriculum verification matrix', () => {
     expect(curriculumRepairTasks.filter((task) => task.status === 'patch_proposed')).toHaveLength(4)
   })
 
-  it('keeps every existing math grade represented by provenance-backed occurrences', () => {
+  it('keeps missing grade coverage explicit instead of pretending reused concepts are coverage', () => {
     const mathRows = verificationRowsForSubject('math')
-    expect(mathRows.every((row) => row.occurrenceCount > 0)).toBe(true)
-    expect(mathRows.every((row) => row.missingSourceCount === 0)).toBe(true)
-    expect(mathRows.every((row) => row.unresolvedAssessmentTargetCount === 0)).toBe(true)
+    const gaps = mathRows.filter((row) => row.coverageStatus === 'gap')
+    expect(gaps.map((row) => row.grade)).toEqual([2])
+    expect(gaps[0]?.occurrenceCount).toBe(0)
+    expect(gaps[0]?.contentStatus).toBe('coverage_gap')
+    expect(curriculumCoverageTasks).toHaveLength(1)
+    expect(curriculumCoverageTasks[0]?.id).toBe('coverage:math:2')
+    expect(curriculumCoverageTasks[0]?.blocking).toBe(true)
+    expect(curriculumVerificationSummary.coverageGapCount).toBe(1)
+    expect(curriculumVerificationSummary.repairTaskCount).toBe(8)
+
+    const coveredRows = mathRows.filter((row) => row.coverageStatus === 'present')
+    expect(coveredRows.every((row) => row.occurrenceCount > 0)).toBe(true)
+    expect(coveredRows.every((row) => row.missingSourceCount === 0)).toBe(true)
+    expect(coveredRows.every((row) => row.unresolvedAssessmentTargetCount === 0)).toBe(true)
   })
 
-  it('requires content, relation, standards, rights and human review checks in the policy', () => {
+  it('requires coverage, content, relation, standards, rights and human review checks in the policy', () => {
+    expect(curriculumVerificationPolicy.requiredChecks).toContain('覆盖完整性')
     expect(curriculumVerificationPolicy.requiredChecks).toContain('知识名称与学习要求一致性')
     expect(curriculumVerificationPolicy.requiredChecks).toContain('跨年级关系证据')
     expect(curriculumVerificationPolicy.requiredChecks).toContain('课标映射证据')
