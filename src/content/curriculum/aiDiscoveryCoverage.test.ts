@@ -27,14 +27,14 @@ describe('AI discovery subject-grade search coverage', () => {
     expect(aiDiscoveryCoverageUnits.every((item) => item.status === 'candidate_review_ready')).toBe(true)
   })
 
-  it('reflects wave03 framework anchors without mistaking them for knowledge completeness', () => {
-    expect(aiDiscoveryCoverageFor('chinese', 1)?.candidateCount).toBe(11)
-    expect(aiDiscoveryCoverageFor('chinese', 2)?.candidateCount).toBe(9)
-    expect(aiDiscoveryCoverageFor('chinese', 6)?.candidateCount).toBe(9)
-    expect(aiDiscoveryCoverageFor('english', 3)?.candidateCount).toBe(3)
-    expect(aiDiscoveryCoverageFor('english', 4)?.candidateCount).toBe(4)
-    expect(aiDiscoveryCoverageFor('english', 5)?.candidateCount).toBe(5)
-    expect(aiDiscoveryCoverageFor('english', 6)?.candidateCount).toBe(4)
+  it('reflects wave04 depth additions without mistaking them for knowledge completeness', () => {
+    expect(aiDiscoveryCoverageFor('chinese', 1)?.candidateCount).toBe(12)
+    expect(aiDiscoveryCoverageFor('chinese', 2)?.candidateCount).toBe(10)
+    expect(aiDiscoveryCoverageFor('chinese', 6)?.candidateCount).toBe(10)
+    expect(aiDiscoveryCoverageFor('english', 3)?.candidateCount).toBe(6)
+    expect(aiDiscoveryCoverageFor('english', 4)?.candidateCount).toBe(7)
+    expect(aiDiscoveryCoverageFor('english', 5)?.candidateCount).toBe(6)
+    expect(aiDiscoveryCoverageFor('english', 6)?.candidateCount).toBe(5)
     expect(aiDiscoveryCoverageFor('math', 1)?.candidateCount).toBe(7)
     expect(aiDiscoveryCoverageFor('math', 4)?.candidateCount).toBe(5)
     expect(aiDiscoveryCoverageFor('math', 6)?.candidateCount).toBe(5)
