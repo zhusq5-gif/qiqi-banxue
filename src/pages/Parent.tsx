@@ -185,7 +185,8 @@ function StatsTab() {
       const list: Array<{ date: string; done: number; total: number }> = []
       const [y, m, d] = from.split('-').map(Number)
       let cur = new Date(Date.UTC(y, m - 1, d, 12))
-      const end = new Date(Date.UTC(...(to.split('-').map(Number) as [number, number, number]), 12))
+      const [ty, tm, td] = to.split('-').map(Number)
+      const end = new Date(Date.UTC(ty, tm - 1, td, 12))
       while (cur <= end) {
         const ds = cur.toISOString().slice(0, 10)
         list.push({ date: ds, done: countByDate[ds] || 0, total: subs.length })

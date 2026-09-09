@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
-import Today from './pages/Today'
-import Parent from './pages/Parent'
 import { getProfile, getSessionUser, type Profile } from './lib/cloudbase'
+
+// 页面级代码分割：家长视图体积最大且仅家长使用，孩子今日页按需加载，缩小首屏关键路径
+const Today = lazy(() => import('./pages/Today'))
+const Parent = lazy(() => import('./pages/Parent'))
 
 type AppState = 'loading' | 'login' | 'onboarding' | 'ready'
 
@@ -46,10 +48,10 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/today" element={<Today profile={profile!} />} />
+      <Route path="/today" element={<Suspense fallback={<Splash />}><Today profile={profile!} /></Suspense>} />
       <Route
         path="/parent"
-        element={<Parent profile={profile!} onProfileChange={setProfile} onLogout={bootstrap} />}
+        element={<Suspense fallback={<Splash />}><Parent profile={profile!} onProfileChange={setProfile} onLogout={bootstrap} /></Suspense>}
       />
       <Route path="*" element={<Navigate to="/today" replace />} />
     </Routes>

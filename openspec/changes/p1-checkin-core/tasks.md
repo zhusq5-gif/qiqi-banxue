@@ -41,4 +41,4 @@
 ## 7. 部署上线
 
 - [x] 7.1 仓库已推送 GitHub（gh CLI 凭证 + git push，经 chester 授权替代只读 MCP）；EdgeOne Makers 部署 dist/ 静态产物上线（项目 qiqi-banxue，中国站；Vite 环境变量已在本地构建时注入 dist，无需线上环境变量）；Pages 域名 qiqi-banxue-xpnba4ki.edgeone.cool 已加入 CloudBase 安全域名并 ENABLE（2026-08-27）
-- [ ] 7.2 端到端验收：iPad Safari 打开线上地址→登录→添加科目→打卡→得星→兑换→导出，全流程通过；"添加到主屏幕"后全屏运行正常（桌面端线上 E2E 已全通过 2026-08-28；iPad 真机验收待 chester 操作，建议用正式域名 qiqi.77xiaomiao.cn）
+- [ ] 7.2 端到端验收：iPad Safari 打开线上地址→登录→添加科目→打卡→得星→兑换→导出，全流程通过；"添加到主屏幕"后全屏运行正常（桌面端线上 E2E 已全通过 2026-08-28；iPad Air 视口模拟预检已全通过 2026-09-09：登录/打卡/五标签布局/长按兑换/导出，且发现并修复 StatsTab 月份未减一的日期 bug；剩 iPad 真机最终确认，待 chester 操作，建议用正式域名 qiqi.77xiaomiao.cn）
