@@ -4,6 +4,12 @@
 
 `真人审核 case → decision v1/v2 → ingestion → structured proposal → secondary regression → curriculum content approval gate（下一阶段）`
 
+页面入口：
+- `/knowledge-map/human-review`
+- `/knowledge-map/human-review/ingest`
+- `/knowledge-map/human-review/current`
+- `/knowledge-map/human-review/proposal`
+
 已实现：
 - v1 decision 兼容接收与二次复测；由于不绑定 caseState，只能生成非正式 candidate。
 - v2 decision 保存当前 caseState；旧 case decision 与当前 case 不一致时必须重新核对。
