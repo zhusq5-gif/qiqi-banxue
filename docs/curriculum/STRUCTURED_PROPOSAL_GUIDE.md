@@ -6,8 +6,7 @@
 
 ## 1. 什么时候需要 Structured Proposal
 
-如果真人 decision v2 是以下任一决定，就不能仅靠一个 decision 字段继续：
-
+以下人工决定不能仅靠一个 decision 字段继续：
 - `revise_candidate`
 - `split_nodes`
 - `rename_and_reframe`
@@ -15,41 +14,29 @@
 - `propose_curriculum_relation`
 - `split_identity_candidate`
 
-这些决定都必须补一份：
+必须补一份：`qiqi-curriculum-human-review-structured-proposal/v1`。
 
-`qiqi-curriculum-human-review-structured-proposal/v1`
+系统入口：`/knowledge-map/human-review/proposal`。
 
-系统入口：
-
-`/knowledge-map/human-review/proposal`
-
-输入两份 JSON：
-
+输入：
 1. 当前 case 绑定的 `qiqi-curriculum-human-review-decision/v2`
-2. 对应的 structured proposal
+2. structured proposal JSON
 
-页面会依次运行：
+执行：
 
 `proposal validation → reference closure → secondary regression → candidate snapshot v2`
 
-只有全部通过，才会显示：
+全部通过后：`nextGate = curriculum_content_approval_gate`。
 
-`nextGate = curriculum_content_approval_gate`
-
-但候选仍固定：
-
-- `autoApply=false`
-- `humanVerified=false`
+候选仍固定：`autoApply=false / humanVerified=false`。
 
 ## 2. 通用字段
-
-每个 proposal 都必须包含：
 
 ```json
 {
   "schema": "qiqi-curriculum-human-review-structured-proposal/v1",
   "caseId": "与 decision v2 完全相同",
-  "kind": "见下文五种类型",
+  "kind": "五种类型之一",
   "rationale": "为什么要做这个结构变更",
   "evidenceRefs": ["至少一条当前 case 的真实 sourceRef"],
   "status": "structured_proposal_candidate",
@@ -58,22 +45,16 @@
 ```
 
 通用拒绝条件：
-
 - decision v2 的 caseState 已不是当前 case；
 - proposal.caseId 与 decision.caseId 不一致；
-- proposal.kind 与人工 decision 不匹配；
-- rationale 为空；
-- evidenceRefs 为空或没有引用当前 case；
-- 试图设置自动应用状态。
+- proposal.kind 与 decision 不匹配；
+- rationale/evidence 缺失；
+- evidence 未引用当前 case；
+- 试图自动应用。
 
 ## 3. `content_revision`
 
-对应人工决定：
-
-- `revise_candidate`
-- `rename_and_reframe`
-
-核心字段：
+对应：`revise_candidate / rename_and_reframe`。
 
 ```json
 {
@@ -86,34 +67,15 @@
 }
 ```
 
-### 普通 `revise_candidate`
+普通 `revise_candidate` 必须继续遵守 issue 已定义的字段范围。例如 F006 只允许题型范围内调整；同时改 label 会被 `CONTENT_REVISION_OUTSIDE_ALLOWED_FIELDS` 拦截。
 
-必须继续遵守该 issue 已定义的允许字段范围。
+F005 `rename_and_reframe` 当前只用于 F005，且至少改变 label 或 learningDemand。
 
-例如 F006 原问题是英语题型污染，当前允许修补范围只有 `questionTypes`。如果真人同时修改知识名称，validator 会返回：
-
-`CONTENT_REVISION_OUTSIDE_ALLOWED_FIELDS`
-
-### F005 `rename_and_reframe`
-
-当前只允许用于 F005。至少要改变 label 或 learningDemand，不能提交“看起来像变更、实际上原文未变”的 proposal。
-
-### 二次回归
-
-系统检查：
-
-- 原 source entry 仍存在；
-- 原 Knowledge identity 不被替换；
-- seed 保持 immutable；
-- 生成 before/after candidate，而不是写回 seed。
+二次回归检查 source entry/identity 不变、seed immutable，并生成 before/after candidate。
 
 ## 4. `concept_split`
 
-当前对应：
-
-`F005 + split_nodes`
-
-核心字段：
+当前用于 F005 `split_nodes`。
 
 ```json
 {
@@ -131,36 +93,18 @@
 }
 ```
 
-当前强制条件：
+强制：
+- sourceNodeId 必须是 F005 源节点；
+- 至少两个候选节点；
+- candidate ID 唯一；
+- 每个候选有名称、学习要求、题型；
+- 每个候选明确继承原教材出现位置。
 
-- sourceNodeId 必须就是 F005 的源节点；
-- 至少拆成两个候选节点；
-- temporaryId 唯一且以 `candidate:` 开头；
-- 每个候选都有名称、学习要求、题型；
-- 每个候选明确声明 `inheritsSourceOccurrence=true`。
-
-二次回归会生成：
-
-`concept_split_changeset_candidate`
-
-其中包含：
-
-- 原 sourceNodeId；
-- 原教材 occurrence 定位；
-- `redirectsTo`；
-- 两个或多个 proposed nodes。
-
-候选阶段不会删除原节点。
+二次回归生成 `concept_split_changeset_candidate`，包含 source occurrence、redirectsTo 和 proposedNodes。候选阶段不删除原节点。
 
 ## 5. `assessment_mapping`
 
-对应人工决定：
-
-`propose_curated_mapping`
-
-用于 raw Exercise 没有 `tests_concept/tests_skill`，但真人教研基于教材证据认为应建立课程层 Assessment 映射的情况。
-
-核心字段：
+对应 `propose_curated_mapping`。
 
 ```json
 {
@@ -172,35 +116,19 @@
 }
 ```
 
-强制条件：
+强制：
+- 当前 case 必须是 assessment_binding；
+- rawExerciseId 必须是当前 case 审核的同一 Exercise；
+- target KnowledgeNode 存在；
+- provenance 固定 curated 层。
 
-- 当前 human-review case 必须是 `assessment_binding`；
-- rawExerciseId 必须就是这个 case 所审核的 Exercise；
-- target KnowledgeNode 必须真实存在；
-- provenance 必须是 `qiqi_curated_review`。
+二次回归检查 `raw_edge_immutable=true`，不会向 K12-KGraph raw tests_* 写 synthetic edge。
 
-二次回归明确检查：
-
-`raw_edge_immutable = true`
-
-即：curated mapping 不会写成 K12-KGraph raw `tests_*` edge。
-
-### exe20
-
-`math_4a_rjb_exe20` 当前 raw source 的 G4 tests block 未发现 tests_* 记录，因此：
-
-- 可以继续 `keep_unmapped`；
-- 可以要求更多来源证据；
-- 真人若提出课程映射，只能使用本 proposal 类型；
-- 不能修改 K12-KGraph raw provenance。
+`math_4a_rjb_exe20` 当前 raw G4 tests block 未找到 tests_*；真人若提出绑定，只能走本 proposal，不修改 raw provenance。
 
 ## 6. `curriculum_relation`
 
-对应人工决定：
-
-`propose_curriculum_relation`
-
-核心字段：
+对应 `propose_curriculum_relation`。
 
 ```json
 {
@@ -208,34 +136,24 @@
   "fromKnowledgeNodeId": "math:kg:...",
   "toKnowledgeNodeId": "math:kg:...",
   "relationType": "related_to | revisits | progresses_to | prerequisite_for",
-  "supportingRawRefs": ["raw edge id 或当前 case sourceLocator"],
+  "supportingRawRefs": ["当前 relation case 的 raw evidence"],
   "provenance": "qiqi_curated_review"
 }
 ```
 
-强制条件：
+强制：
+- 当前 case 必须是 cross_grade_relation；
+- 两端存在且不同；
+- supporting raw relation 必须就是**同一对 KnowledgeNode**，方向可调整；
+- raw relation 保持不变。
 
-- 当前 case 必须是 `cross_grade_relation`；
-- 两端 KnowledgeNode 必须存在且不能相同；
-- supportingRawRefs 至少包含当前 case 的 raw evidence；
-- supporting raw relation 必须就是**同一对 KnowledgeNode**（方向可因课程解释而调整）；
-- raw relation 本身保持不变。
+raw evidence 不能被拿去支撑无关的两个节点。
 
-因此一条 raw relation 的 evidence 不能被拿去支撑完全无关的两个节点。
-
-如果 relationType 是 `prerequisite_for`，二次回归会把候选加入现有 prerequisite 图并执行 cycle check。存在环则拒绝。
-
-注意：当前真实 Wave 2 样本不一定包含可构造反向环的 prerequisite case；环检测算法使用独立纯有向图测试验证，不为了测试而制造课程 raw edge。
+若 relationType=`prerequisite_for`，候选加入现有 prerequisite 图执行 cycle check。环检测算法使用独立纯有向图测试验证，不向真实课程样本制造关系。
 
 ## 7. `identity_split`
 
-对应人工决定：
-
-`split_identity_candidate`
-
-用于真人认为“同一个 normalized KnowledgeNode 在多个 Occurrence 中其实不应继续共用概念身份”的情况。
-
-核心字段：
+对应 `split_identity_candidate`。
 
 ```json
 {
@@ -251,47 +169,38 @@
 }
 ```
 
-强制条件：
+强制：
+- 当前 case 必须是 occurrence_reuse；
+- source node 就是当前 case 审核对象；
+- source 至少两个可定位 Occurrence；
+- source Occurrence 全部且只分配一次；
+- 每个 candidate 至少分到一个 Occurrence。
 
-- 当前 case 必须是 `occurrence_reuse`；
-- source KnowledgeNode 必须就是当前 case 审核的节点；
-- source 至少有两个可定位 Occurrence，否则没有足够证据拆 identity；
-- 所有 source Occurrence 必须且只能被分配一次；
-- temporaryId 唯一且以 `candidate:` 开头；
-- 每个新节点至少分到一个 Occurrence。
+二次回归执行 reference closure。候选阶段不删除 source node，只生成 split/redirect 计划。
 
-二次回归执行 reference closure：
+## 8. 结果解释
 
-`全部 source occurrence = 全部 proposed assignment，且无重复`
+- `proposal_revision_required`：结构、case/evidence、端点或 reference closure 有问题。
+- `structured_proposal_secondary_regression`：proposal validation 已通过，进入回归。
+- `curriculum_content_approval_gate`：validation + regression 均通过，可以把 candidate snapshot 交给下一层内容审批门禁。
 
-候选阶段仍不删除 source node，只生成 split/redirect 计划。
+它不意味着：专家已签名、教材版本已核、权利已清、课标映射已批准或可以正式发布。
 
-## 8. 结果如何解释
+## 9. 下一工程门禁
 
-### `proposal_revision_required`
+`curriculum content approval gate` 需要继续绑定：
+- candidate snapshot v2；
+- 审核对象版本；
+- reviewer identity/public key；
+- 实际 evidence；
+- 内容摘要。
 
-结构、case/evidence 绑定、端点或 reference closure 有问题。修改 proposal 后重新运行。
+内容/证据变化后旧 approval 必须失效。真实签名只能来自线下核验的学科 reviewer；仓库不保存私钥。
 
-### `structured_proposal_secondary_regression`
+## 10. 当前真人依赖
 
-proposal validation 已通过，准备执行二次回归。
-
-### `curriculum_content_approval_gate`
-
-validation + secondary regression 均通过，可以把 candidate snapshot 交给下一层内容审批门禁。
-
-它不意味着：
-
-- 专家已正式签名；
-- 教材版本已核；
-- 权利状态已完成；
-- 课标映射已批准；
-- 可以正式发布。
-
-## 9. 当前真人依赖
-
-本仓库目前没有真实审核者提交的 decision v2，也没有真实 reviewer 签名。因此：
+仓库目前没有真实审核者提交的 decision v2，也没有真实 reviewer 签名，因此：
 
 `humanVerified = 0`
 
-上述 structured proposal 流程已经可以接收真实审核结果，但不会自行伪造审核结论。
+structured proposal 流程已经可以接收真实审核结果，但不会自行伪造审核结论。
