@@ -50,4 +50,18 @@ describe('AI discovery subject-grade-domain planning', () => {
     expect(cultureCells.every((cell) => cell.candidateCount >= 1)).toBe(true)
     expect(aiDiscoveryDomainCoverageCells.some((cell) => cell.subject === 'english' && cell.status === 'search_required')).toBe(true)
   })
+
+  it('uses wave05 concrete abilities to deepen Chinese reading/expression/inquiry and English phonics/read-write/listening', () => {
+    const g3Writing = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai5-chinese-g3-picture-content-clear-writing')!
+    const g4Lexical = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai5-chinese-g4-figurative-animal-word-use')!
+    const g5Speed = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai5-chinese-g5-reading-speed-strategies')!
+    const g5Phonics = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai5-english-g5-phonics-spelling')!
+    const g6Retell = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai5-english-g6-listen-retell')!
+
+    expect(aiDiscoveryDomainIdsForCandidate(g3Writing)).toContain('cn-expression-communication')
+    expect(aiDiscoveryDomainIdsForCandidate(g4Lexical)).toEqual(expect.arrayContaining(['cn-expression-communication', 'cn-organization-inquiry']))
+    expect(aiDiscoveryDomainIdsForCandidate(g5Speed)).toEqual(expect.arrayContaining(['cn-reading-appreciation', 'cn-organization-inquiry']))
+    expect(aiDiscoveryDomainIdsForCandidate(g5Phonics)).toEqual(expect.arrayContaining(['en-phonics', 'en-language-knowledge']))
+    expect(aiDiscoveryDomainIdsForCandidate(g6Retell)).toEqual(expect.arrayContaining(['en-communication', 'en-listening-speaking']))
+  })
 })
