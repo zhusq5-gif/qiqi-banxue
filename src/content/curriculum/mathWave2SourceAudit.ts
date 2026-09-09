@@ -1,6 +1,6 @@
 import rawAudit from './math-wave2-source-audit-v01.json'
 
-export type MathWave2SourceAuditStatus = 'excerpt_gap_repaired' | 'source_unlinked_candidate'
+export type MathWave2SourceAuditStatus = 'excerpt_gap_repaired' | 'source_unlinked_in_grade_tests_block'
 
 export interface MathWave2SourceAuditRecord {
   rawExerciseId: string
@@ -26,4 +26,4 @@ export function mathWave2SourceAuditRecord(rawExerciseId: string) {
 }
 
 export const mathWave2ResolvedExcerptGaps = mathWave2SourceAudit.records.filter((item) => item.status === 'excerpt_gap_repaired')
-export const mathWave2SourceUnlinkedCandidates = mathWave2SourceAudit.records.filter((item) => item.status === 'source_unlinked_candidate')
+export const mathWave2ConfirmedUnlinkedInGradeBlock = mathWave2SourceAudit.records.filter((item) => item.status === 'source_unlinked_in_grade_tests_block')
