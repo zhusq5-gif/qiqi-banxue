@@ -13,6 +13,27 @@ function allArgs(name) {
   return values
 }
 
+function resolveSubject(snapshot) {
+  const direct = snapshot?.proposed?.subject ?? snapshot?.proposal?.proposed?.subject ?? snapshot?.derivedCandidate?.subject ?? null
+  if (direct) return direct
+  if (snapshot?.derivedCandidate?.kind === 'curated_assessment_mapping_candidate'
+    || snapshot?.derivedCandidate?.kind === 'curriculum_relation_candidate'
+    || snapshot?.derivedCandidate?.kind === 'knowledge_identity_split_candidate') return 'math'
+
+  const seed = JSON.parse(fs.readFileSync('src/content/curriculum/curriculum-seed-v02.json', 'utf8'))
+  const sourceNodeId = snapshot?.derivedCandidate?.sourceNodeId ?? null
+  if (sourceNodeId) {
+    const entry = seed.entries.find((item) => item.id === sourceNodeId)
+    if (entry?.subject) return entry.subject
+  }
+  const issueMatch = /^human-review:(F\d{3})$/.exec(snapshot?.caseId ?? '')
+  if (issueMatch) {
+    const issue = seed.issues.find((item) => item.id === issueMatch[1])
+    if (issue?.subject) return issue.subject
+  }
+  return null
+}
+
 const snapshotPath = arg('--snapshot')
 const candidateId = arg('--candidate-id')
 const datasetVersion = arg('--dataset-version')
@@ -38,8 +59,8 @@ if (!acceptedSchemas.has(snapshot.schema)) throw new Error(`Unsupported snapshot
 if (snapshot.readyForApprovalGate !== true) throw new Error('Snapshot is not readyForApprovalGate')
 if (snapshot.autoApply !== false || snapshot.humanVerified !== false) throw new Error('Snapshot safety flags are invalid')
 
-const subject = snapshot?.proposed?.subject ?? snapshot?.proposal?.proposed?.subject ?? snapshot?.derivedCandidate?.subject ?? null
-if (!subject || !['chinese', 'english', 'math'].includes(subject)) throw new Error('Snapshot must expose a supported curriculum subject before formal registration')
+const subject = resolveSubject(snapshot)
+if (!subject || !['chinese', 'english', 'math'].includes(subject)) throw new Error('Could not safely resolve a supported curriculum subject from the snapshot/current seed')
 
 const candidate = {
   schema: 'qiqi-curriculum-content-candidate/v1',
