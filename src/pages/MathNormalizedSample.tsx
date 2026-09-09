@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { mathFineSample, type MathFineThemeId } from '../content/curriculum/mathFineSample'
+import { mathFineSample } from '../content/curriculum/mathFineSample'
 import {
   mathAssessmentsForNode,
   mathNormalizedDataset,
