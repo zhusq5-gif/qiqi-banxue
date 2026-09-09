@@ -8,11 +8,11 @@ describe('grade-level math evidence audit', () => {
     expect(mathGradeAudits.every((item) => item.occurrenceCount > 0)).toBe(true)
   })
 
-  it('distinguishes unlinked assessments from unresolved assessment targets', () => {
+  it('removes the false-positive exe8 gap after restoring its raw tests edge', () => {
     const grade4 = mathGradeAudit(4)!
     expect(grade4.unresolvedAssessmentTargetCount).toBe(0)
-    expect(grade4.unlinkedAssessmentCount).toBeGreaterThanOrEqual(2)
-    expect(mathWave2AuditTasks.some((task) => task.id === 'math-audit:g4:assessment:math_4a_rjb_exe8' && task.severity === 'blocking')).toBe(true)
+    expect(grade4.unlinkedAssessmentCount).toBe(1)
+    expect(mathWave2AuditTasks.some((task) => task.id === 'math-audit:g4:assessment:math_4a_rjb_exe8')).toBe(false)
     expect(mathWave2AuditTasks.some((task) => task.id === 'math-audit:g4:assessment:math_4a_rjb_exe20' && task.severity === 'blocking')).toBe(true)
   })
 
@@ -21,7 +21,6 @@ describe('grade-level math evidence audit', () => {
     const grade5 = mathGradeAudit(5)!
     const relation4 = grade4.crossGradeRelations.find((item) => item.rawEdgeId === 'fine-v3-e67')
     const relation5 = grade5.crossGradeRelations.find((item) => item.rawEdgeId === 'fine-v3-e67')
-
     for (const relation of [relation4, relation5]) {
       expect(relation).toBeTruthy()
       expect(relation?.relationType).toBe('relates_to')
@@ -41,13 +40,13 @@ describe('grade-level math evidence audit', () => {
     expect(mathWave2AuditTasks.some((task) => task.id === `math-audit:g4:reuse:${angleReuse?.occurrenceId}` && task.severity === 'review')).toBe(true)
   })
 
-  it('requires evidence for semantic relations and treats future-origin occurrences as blocking', () => {
+  it('requires evidence for semantic relations and treats only unresolved data gaps as blocking', () => {
     for (const audit of mathWave2GradeAudits) {
       expect(audit.relationEvidenceMissingCount).toBe(0)
       expect(audit.futureOriginOccurrenceCount).toBe(0)
     }
     expect(mathWave2AuditTasks.every((task) => task.autoApply === false)).toBe(true)
     expect(mathWave2AuditTasks.filter((task) => task.kind === 'cross_grade_relation_review').every((task) => task.severity === 'review')).toBe(true)
-    expect(mathWave2AuditTasks.filter((task) => task.kind === 'assessment_without_target').every((task) => task.severity === 'blocking')).toBe(true)
+    expect(mathWave2AuditTasks.filter((task) => task.kind === 'assessment_without_target')).toHaveLength(1)
   })
 })
