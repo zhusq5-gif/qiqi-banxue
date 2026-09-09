@@ -14,26 +14,34 @@ describe('AI discovery subject-grade search coverage', () => {
     expect(aiDiscoveryCoverageUnits.filter((item) => item.subject === 'math')).toHaveLength(6)
   })
 
-  it('identifies zero-candidate and low-candidate grades without calling them knowledge gaps', () => {
-    expect(aiDiscoveryCoverageSummary.searchRequiredCount).toBe(6)
-    expect(aiDiscoveryCoverageSummary.expandSearchCount).toBe(4)
-    expect(aiDiscoveryCoverageSummary.reviewReadyCount).toBe(6)
+  it('moves all 16 units to minimum candidate-review readiness after wave02 without claiming curriculum completeness', () => {
+    expect(aiDiscoveryCoverageSummary.searchRequiredCount).toBe(0)
+    expect(aiDiscoveryCoverageSummary.expandSearchCount).toBe(0)
+    expect(aiDiscoveryCoverageSummary.reviewReadyCount).toBe(16)
+    expect(aiDiscoveryNextSearchQueue).toHaveLength(0)
     expect(aiDiscoveryCoverageSummary.note).toContain('不是正式课程知识覆盖率')
+    expect(aiDiscoveryCoverageSummary.note).toContain('最低数量候选')
   })
 
-  it('prioritizes completely uncovered AI-search units before shallowly covered units', () => {
-    const zeroCount = aiDiscoveryNextSearchQueue.filter((item) => item.status === 'search_required').length
-    expect(zeroCount).toBe(6)
-    expect(aiDiscoveryNextSearchQueue.slice(0, zeroCount).every((item) => item.candidateCount === 0)).toBe(true)
+  it('gives every required subject-grade at least three candidates for UI review', () => {
+    expect(aiDiscoveryCoverageUnits.every((item) => item.candidateCount >= 3)).toBe(true)
+    expect(aiDiscoveryCoverageUnits.every((item) => item.status === 'candidate_review_ready')).toBe(true)
   })
 
-  it('reflects the first batch distribution accurately', () => {
+  it('reflects the two-batch distribution accurately', () => {
     expect(aiDiscoveryCoverageFor('chinese', 1)?.candidateCount).toBe(5)
-    expect(aiDiscoveryCoverageFor('chinese', 4)?.candidateCount).toBe(2)
+    expect(aiDiscoveryCoverageFor('chinese', 2)?.candidateCount).toBe(3)
+    expect(aiDiscoveryCoverageFor('chinese', 3)?.candidateCount).toBe(3)
+    expect(aiDiscoveryCoverageFor('chinese', 4)?.candidateCount).toBe(3)
+    expect(aiDiscoveryCoverageFor('chinese', 5)?.candidateCount).toBe(3)
+    expect(aiDiscoveryCoverageFor('chinese', 6)?.candidateCount).toBe(3)
     expect(aiDiscoveryCoverageFor('english', 3)?.candidateCount).toBe(3)
-    expect(aiDiscoveryCoverageFor('english', 6)?.candidateCount).toBe(2)
+    expect(aiDiscoveryCoverageFor('english', 4)?.candidateCount).toBe(3)
+    expect(aiDiscoveryCoverageFor('english', 5)?.candidateCount).toBe(3)
+    expect(aiDiscoveryCoverageFor('english', 6)?.candidateCount).toBe(3)
     expect(aiDiscoveryCoverageFor('math', 1)?.candidateCount).toBe(5)
     expect(aiDiscoveryCoverageFor('math', 4)?.candidateCount).toBe(3)
-    expect(aiDiscoveryCoverageFor('math', 6)?.candidateCount).toBe(2)
+    expect(aiDiscoveryCoverageFor('math', 5)?.candidateCount).toBe(3)
+    expect(aiDiscoveryCoverageFor('math', 6)?.candidateCount).toBe(3)
   })
 })
