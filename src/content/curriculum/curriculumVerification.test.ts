@@ -92,22 +92,24 @@ describe('subject-grade curriculum verification matrix', () => {
     expect(curriculumRepairTasks.filter((task) => task.status === 'patch_proposed')).toHaveLength(4)
   })
 
-  it('keeps missing grade coverage explicit instead of pretending reused concepts are coverage', () => {
+  it('closes the math grade-2 coverage gap only after genuine grade-2 occurrences exist', () => {
     const mathRows = verificationRowsForSubject('math')
-    const gaps = mathRows.filter((row) => row.coverageStatus === 'gap')
-    expect(gaps.map((row) => row.grade)).toEqual([2])
-    expect(gaps[0]?.occurrenceCount).toBe(0)
-    expect(gaps[0]?.contentStatus).toBe('coverage_gap')
-    expect(curriculumCoverageTasks).toHaveLength(1)
-    expect(curriculumCoverageTasks[0]?.id).toBe('coverage:math:2')
-    expect(curriculumCoverageTasks[0]?.blocking).toBe(true)
-    expect(curriculumVerificationSummary.coverageGapCount).toBe(1)
-    expect(curriculumVerificationSummary.repairTaskCount).toBe(8)
+    expect(mathRows.filter((row) => row.coverageStatus === 'gap')).toHaveLength(0)
+    expect(curriculumCoverageTasks).toHaveLength(0)
+    expect(curriculumVerificationSummary.coverageGapCount).toBe(0)
+    expect(curriculumVerificationSummary.repairTaskCount).toBe(7)
 
-    const coveredRows = mathRows.filter((row) => row.coverageStatus === 'present')
-    expect(coveredRows.every((row) => row.occurrenceCount > 0)).toBe(true)
-    expect(coveredRows.every((row) => row.missingSourceCount === 0)).toBe(true)
-    expect(coveredRows.every((row) => row.unresolvedAssessmentTargetCount === 0)).toBe(true)
+    const grade2 = mathRows.find((row) => row.grade === 2)
+    expect(grade2?.coverageStatus).toBe('present')
+    expect(grade2?.occurrenceCount).toBe(6)
+    expect(grade2?.knowledgePointCount).toBe(6)
+    expect(grade2?.assessmentCount).toBe(2)
+    expect(verificationItemsForGrade('math', 2)).toHaveLength(6)
+    expect(verificationItemsForGrade('math', 2).every((item) => item.sourcePresent && item.gradeBound)).toBe(true)
+
+    expect(mathRows.every((row) => row.occurrenceCount > 0)).toBe(true)
+    expect(mathRows.every((row) => row.missingSourceCount === 0)).toBe(true)
+    expect(mathRows.every((row) => row.unresolvedAssessmentTargetCount === 0)).toBe(true)
   })
 
   it('requires coverage, content, relation, standards, rights and human review checks in the policy', () => {
