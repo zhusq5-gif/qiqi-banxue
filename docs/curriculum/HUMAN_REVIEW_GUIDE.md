@@ -64,19 +64,10 @@ v2 保存 `sourceTaskId / title / reviewType / sourceRefs / allowedDecisions`。
 
 `proposal validation → reference closure → secondary regression`
 
-重点检查：
-- 当前 decision/case/evidence 绑定；
-- content 字段范围；
-- split redirect/Occurrence 计划；
-- Assessment curated provenance 与 raw edge immutable；
-- relation endpoint pair 与 raw relation immutable；
-- candidate prerequisite cycle；
-- identity split Occurrence closure。
+重点检查：当前 decision/case/evidence 绑定、content 字段范围、split redirect/Occurrence 计划、Assessment curated provenance/raw immutable、relation endpoint pair/raw relation immutable、candidate prerequisite cycle、identity split Occurrence closure。
 
 全部通过后只生成 `qiqi-curriculum-structured-candidate-snapshot/v2`，并进入 `curriculum_content_approval_gate`。
 
-候选仍固定：
-- `autoApply=false`
-- `humanVerified=false`
+候选仍固定：`autoApply=false / humanVerified=false`。
 
 正式发布还需要 content approval、教材版本、权利、课标映射等门禁全部通过。详细操作见 `STRUCTURED_PROPOSAL_GUIDE.md`。
