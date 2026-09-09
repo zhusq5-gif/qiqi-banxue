@@ -60,6 +60,19 @@ const explicitDomainByCandidateId: Record<string, string[]> = {
   'ai3-english-g5-phonics-spelling': ['en-phonics', 'en-language-knowledge'],
   'ai3-english-g5-read-write': ['en-reading', 'en-writing'],
   'ai3-english-g6-theme-read-write': ['en-reading', 'en-writing'],
+  'ai5-chinese-g2-word-accumulation-categorization': ['cn-literacy-writing', 'cn-organization-inquiry', 'cn-task-language-accumulation'],
+  'ai5-chinese-g3-fresh-expression-reading': ['cn-reading-appreciation', 'cn-task-language-accumulation'],
+  'ai5-chinese-g3-fable-moral-comprehension': ['cn-reading-appreciation', 'cn-task-literary-reading'],
+  'ai5-chinese-g3-picture-content-clear-writing': ['cn-expression-communication'],
+  'ai5-chinese-g4-imagery-reading': ['cn-reading-appreciation', 'cn-task-literary-reading'],
+  'ai5-chinese-g4-figurative-animal-word-use': ['cn-expression-communication', 'cn-organization-inquiry', 'cn-task-language-accumulation'],
+  'ai5-chinese-g5-static-dynamic-description': ['cn-reading-appreciation', 'cn-expression-communication', 'cn-task-literary-reading'],
+  'ai5-chinese-g5-reading-speed-strategies': ['cn-reading-appreciation', 'cn-organization-inquiry'],
+  'ai5-english-g3-pronunciation-intonation': ['en-phonics', 'en-language-knowledge', 'en-listening-speaking'],
+  'ai5-english-g3-read-write-discuss': ['en-listening-speaking', 'en-reading', 'en-writing'],
+  'ai5-english-g5-phonics-spelling': ['en-phonics', 'en-language-knowledge'],
+  'ai5-english-g5-read-write': ['en-reading', 'en-writing'],
+  'ai5-english-g6-listen-retell': ['en-communication', 'en-listening-speaking'],
 }
 
 function includeByText(candidate: AIDiscoveryCandidate, domainIds: Set<string>) {
