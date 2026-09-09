@@ -22,9 +22,9 @@ function unique(values: string[]) {
 
 describe('normalized primary math curriculum layer', () => {
   it('maps only raw Concept and Skill nodes into provisional KnowledgeNode identities', () => {
-    expect(mathKnowledgeNodes).toHaveLength(76)
-    expect(mathKnowledgeNodes.filter((item) => item.kind === 'concept')).toHaveLength(56)
-    expect(mathKnowledgeNodes.filter((item) => item.kind === 'skill')).toHaveLength(20)
+    expect(mathKnowledgeNodes).toHaveLength(82)
+    expect(mathKnowledgeNodes.filter((item) => item.kind === 'concept')).toHaveLength(60)
+    expect(mathKnowledgeNodes.filter((item) => item.kind === 'skill')).toHaveLength(22)
     expect(unique(mathKnowledgeNodes.map((item) => item.id))).toBe(true)
     expect(mathKnowledgeNodes.every((item) => item.canonicalStatus === 'provisional')).toBe(true)
     expect(mathKnowledgeNodes.every((item) => item.source.license === 'CC BY-NC-SA 4.0')).toBe(true)
@@ -55,8 +55,16 @@ describe('normalized primary math curriculum layer', () => {
     expect(lineOccurrences.some((item) => item.chapterId === 'math_6a_rjb_ch7' && item.grade === 6 && item.semester === 1)).toBe(true)
   })
 
+  it('creates genuine grade-2 occurrences from the grade-2 chapter excerpt', () => {
+    const grade2Occurrences = mathOccurrences.filter((item) => item.grade === 2)
+    expect(grade2Occurrences).toHaveLength(6)
+    expect(new Set(grade2Occurrences.map((item) => item.chapterId))).toEqual(new Set(['math_2a_rjb_ch1']))
+    expect(grade2Occurrences.map((item) => item.knowledgeNodeId)).toContain('math:kg:math_2a_rjb_cpt2')
+    expect(grade2Occurrences.map((item) => item.knowledgeNodeId)).toContain('math:kg:math_2a_rjb_skl1')
+  })
+
   it('maps raw Exercise plus tests edges into AssessmentTask references', () => {
-    expect(mathAssessmentTasks).toHaveLength(29)
+    expect(mathAssessmentTasks).toHaveLength(31)
     expect(unique(mathAssessmentTasks.map((item) => item.id))).toBe(true)
     for (const task of mathAssessmentTasks) {
       for (const targetId of task.assessedKnowledgeNodeIds) {
@@ -70,6 +78,11 @@ describe('normalized primary math curriculum layer', () => {
     expect(populationTrend.assessedKnowledgeNodeIds).toContain('math:kg:math_5b_rjb_cpt38')
     expect(populationTrend.assessedKnowledgeNodeIds).toContain('math:kg:math_5b_rjb_skl12')
     expect(populationTrend.chapterIds).toContain('math_5b_rjb_ch7')
+
+    const rulerExercise = mathAssessmentTasks.find((item) => item.rawExerciseId === 'math_2a_rjb_exe1')!
+    expect(rulerExercise.chapterIds).toContain('math_2a_rjb_ch1')
+    expect(rulerExercise.assessedKnowledgeNodeIds).toContain('math:kg:math_2a_rjb_cpt2')
+    expect(rulerExercise.assessedKnowledgeNodeIds).toContain('math:kg:math_2a_rjb_skl1')
   })
 
   it('preserves only raw semantic knowledge edges as normalized relations', () => {
@@ -101,6 +114,9 @@ describe('normalized primary math curriculum layer', () => {
     const earlyCounting = mathNormalizedNodeByRawId('math_1a_rjb_cpt1')!
     expect(mathFineThemesForNode(earlyCounting.source.rawId)).toHaveLength(0)
     expect(earlyCounting.domains).toEqual(['unclassified'])
+
+    const grade2Centimeter = mathNormalizedNodeByRawId('math_2a_rjb_cpt2')!
+    expect(grade2Centimeter.domains).toEqual(['unclassified'])
   })
 
   it('keeps progression metadata as research sequence rather than synthesizing normalized edges', () => {
