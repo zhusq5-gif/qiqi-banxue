@@ -5,6 +5,7 @@ import rawFineFractions from './math-fine-fractions-v03.json'
 import rawFineGeometry from './math-fine-geometry-v03.json'
 import rawFineStatistics from './math-fine-statistics-v03.json'
 import rawFineGrade2Coverage from './math-fine-grade2-coverage-v04.json'
+import rawFineWave2Repair from './math-fine-wave2-repair-v04.json'
 
 export type MathFineNodeLabel = 'Chapter' | 'Concept' | 'Skill' | 'Exercise'
 export type MathFineEdgeType = 'relates_to' | 'prerequisites_for' | 'is_a' | 'appears_in' | 'tests_concept' | 'tests_skill'
@@ -111,11 +112,12 @@ const fractionExpansion = rawFineFractions as MathFineRawExpansion
 const geometryExpansion = rawFineGeometry as MathFineRawExpansion
 const statisticsExpansion = rawFineStatistics as MathFineRawExpansion
 const grade2Coverage = rawFineGrade2Coverage as MathFineRawExpansion
+const wave2Repair = rawFineWave2Repair as MathFineRawExpansion
 
 export const mathFineSample: MathFineSample = {
   ...base,
-  datasetVersion: `${base.datasetVersion}+${expansion.datasetVersion}+${progression.datasetVersion}+${grade2Coverage.datasetVersion}`,
-  scope: `${base.scope}；${expansion.scopeNote}；${progression.scopeNote}；补充二年级上册“长度单位”本年级 Occurrence 样板`,
+  datasetVersion: `${base.datasetVersion}+${expansion.datasetVersion}+${progression.datasetVersion}+${grade2Coverage.datasetVersion}+${wave2Repair.datasetVersion}`,
+  scope: `${base.scope}；${expansion.scopeNote}；${progression.scopeNote}；补充二年级上册“长度单位”本年级 Occurrence 样板；补回 Wave 2 回查确认的 raw tests_* 绑定`,
   themes: progression.themes,
   progressions: progression.progressions,
   nodes: [
@@ -125,6 +127,7 @@ export const mathFineSample: MathFineSample = {
     ...geometryExpansion.nodes,
     ...statisticsExpansion.nodes,
     ...grade2Coverage.nodes,
+    ...wave2Repair.nodes,
   ],
   edges: [
     ...base.edges,
@@ -133,6 +136,7 @@ export const mathFineSample: MathFineSample = {
     ...geometryExpansion.edges,
     ...statisticsExpansion.edges,
     ...grade2Coverage.edges,
+    ...wave2Repair.edges,
   ],
 }
 
