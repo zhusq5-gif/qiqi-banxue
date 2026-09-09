@@ -9,18 +9,21 @@ import {
 import { aiDiscoveryExpansion02, aiDiscoveryExpansion02Batch } from './aiDiscoveryExpansion02'
 import { aiDiscoveryExpansion03, aiDiscoveryExpansion03Batch } from './aiDiscoveryExpansion03'
 import { aiDiscoveryExpansion04, aiDiscoveryExpansion04Batch } from './aiDiscoveryExpansion04'
+import { aiDiscoveryExpansion05, aiDiscoveryExpansion05Batch } from './aiDiscoveryExpansion05'
 
 export const aiDiscoveryBatches = [
   aiDiscoveryBatch,
   aiDiscoveryExpansion02Batch,
   aiDiscoveryExpansion03Batch,
   aiDiscoveryExpansion04Batch,
+  aiDiscoveryExpansion05Batch,
 ]
 export const aiDiscoveryCandidatesAll: AIDiscoveryCandidate[] = [
   ...baseCandidates,
   ...aiDiscoveryExpansion02,
   ...aiDiscoveryExpansion03,
   ...aiDiscoveryExpansion04,
+  ...aiDiscoveryExpansion05,
 ]
 
 export const aiDiscoveryRegistrySummary = {
