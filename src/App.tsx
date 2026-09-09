@@ -12,6 +12,7 @@ const CurriculumVerification = lazy(() => import('./pages/CurriculumVerification
 const CurriculumHumanReview = lazy(() => import('./pages/CurriculumHumanReview'))
 const CurriculumHumanReviewCurrent = lazy(() => import('./pages/CurriculumHumanReviewCurrent'))
 const CurriculumHumanReviewIngestion = lazy(() => import('./pages/CurriculumHumanReviewIngestion'))
+const CurriculumHumanReviewProposal = lazy(() => import('./pages/CurriculumHumanReviewProposal'))
 const CurriculumStandards = lazy(() => import('./pages/CurriculumStandards'))
 const StandardMappingReview = lazy(() => import('./pages/StandardMappingReview'))
 const MathResearchSample = lazy(() => import('./pages/MathResearchSample'))
@@ -78,6 +79,7 @@ export default function App() {
         <Route path="/knowledge-map/human-review" element={<CurriculumHumanReview />} />
         <Route path="/knowledge-map/human-review/current" element={<CurriculumHumanReviewCurrent />} />
         <Route path="/knowledge-map/human-review/ingest" element={<CurriculumHumanReviewIngestion />} />
+        <Route path="/knowledge-map/human-review/proposal" element={<CurriculumHumanReviewProposal />} />
         <Route path="/knowledge-map/standards" element={<CurriculumStandards />} />
         <Route path="/knowledge-map/standards/review" element={<StandardMappingReview />} />
         <Route path="/knowledge-map/math-sample" element={<MathResearchSample />} />
