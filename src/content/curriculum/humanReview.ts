@@ -144,7 +144,7 @@ const contentCases: HumanReviewCase[] = curriculumRepairTasksWave2.map((task) =>
 })
 
 function mathReviewType(kind: (typeof mathWave2AuditTasks)[number]['kind']): HumanReviewType {
-  if (kind === 'assessment_without_target') return 'assessment_binding'
+  if (kind === 'assessment_without_target' || kind === 'source_unlinked_assessment_candidate') return 'assessment_binding'
   if (kind === 'cross_grade_relation_review') return 'cross_grade_relation'
   if (kind === 'reused_prior_grade_occurrence_review') return 'occurrence_reuse'
   return 'data_quality'
