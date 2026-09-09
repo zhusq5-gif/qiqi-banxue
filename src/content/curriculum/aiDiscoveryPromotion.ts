@@ -2,6 +2,8 @@ import type { AIDiscoveryDecisionRecord } from './aiDiscovery'
 import { aiDiscoveryCandidateAllById } from './aiDiscoveryRegistry'
 import type { CurriculumSubject } from './curriculum'
 
+export const AI_PROMOTED_REVIEW_STORAGE_KEY = 'qiqi.curriculum-ai-promoted-review-cases.v1'
+
 export interface AIDiscoveryHumanReviewCaseDraft {
   schema: 'qiqi-curriculum-ai-human-review-case-draft/v1'
   id: string
