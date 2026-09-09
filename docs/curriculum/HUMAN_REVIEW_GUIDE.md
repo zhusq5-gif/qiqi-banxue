@@ -19,14 +19,16 @@
 4. **只在证据范围内决策**：没有原始证据时可以“保持未映射/需要更多证据/提出 curated mapping 候选”，不能伪造 raw edge。
 5. **填写理由和证据**：至少记录审核人姓名、角色、决策、理由、实际查阅的证据引用和时间。
 6. **导出 unsigned decision**：人工决定不直接改 seed，不直接产生 `expert_verified`。
-7. **系统复测**：修补或 curated mapping 在进入正式发布前必须重新跑 CI/数据门禁。
+7. **运行 decision ingestion**：进入 `/knowledge-map/human-review/ingest`，上传或粘贴审核 JSON；系统重新检查当前 case、allowedDecisions、evidenceRefs，并重新运行候选修补检查。
+8. **处理 ingestion 结果**：可安全复测的决定生成 candidate snapshot；需要拆分知识点、人工改写、curated mapping 或 Curriculum relation 的决定进入 `structured_proposal_required`，不会自动生成结构化数据。
+9. **系统二次回归**：候选快照仍为 `autoApply=false`，继续跑 CI/数据门禁后才能进入后续正式流程。
 
 ## 3. 决策边界
 
 ### 内容修补
 
 - `accept_candidate`：候选修补与实际教材/来源一致。
-- `revise_candidate`：方向正确但候选文字/分类需要人工修改。
+- `revise_candidate`：方向正确但候选文字/分类需要人工修改；需要后续结构化提案，不能仅凭一个 decision 字段自动改数据。
 - `defer`：证据不足或需要更高层级教研判断。
 
 ### F005 概念边界
@@ -62,9 +64,37 @@ F005 不提供“接受自动改名”。必须区分：
 - `review-packets/WAVE2_MATH_REVIEW.md`：数学 G4/G5 Assessment / relation / occurrence 专项
 - `review-packets/HUMAN_REVIEW_DECISION_TEMPLATE.json`：人工决定填写模板
 
-系统页面入口：`/knowledge-map/human-review`。
+系统页面入口：
 
-## 5. 通过条件
+- `/knowledge-map/human-review`：查看 case、填写并导出真人审核决定。
+- `/knowledge-map/human-review/ingest`：导入审核决定、运行接收校验与二次回归、导出候选快照。
+
+## 5. ingestion 当前格式边界
+
+目前人工工作台导出的 `qiqi-curriculum-human-review-decision/v1` 可以进入 ingestion，但 v1 **没有绑定 case 版本**。因此 ingestion 生成的 candidate snapshot 固定：
+
+- `formalApprovalEligible=false`
+- `humanVerified=false`
+- `autoApply=false`
+
+这意味着 v1 决定可以用于复测、发现冲突和生成候选快照，但不能直接作为正式发布凭据。如果 case 的来源、候选范围或允许决策在审核后发生变化，应在当前 case 上重新确认，而不是复用旧决定。
+
+## 6. ingestion 接受条件
+
+一个 decision 只有满足以下条件，才会被 ingestion 接受：
+
+- case 在当前数据中仍存在；
+- decision 属于当前 case 的 `allowedDecisions`；
+- `status=unsigned_human_review`；
+- `autoApply=false`、`humanVerified=false`；
+- 审核者姓名和角色非空；
+- rationale 非空；
+- evidenceRefs 非空，并且至少一条与当前 case 的 sourceRefs 完全一致；
+- reviewedAt 是有效日期时间。
+
+`accept_candidate` 还必须重新通过 `curriculumRepairRecheck` 才会生成 content candidate snapshot。
+
+## 7. 通过条件
 
 一个 case 只有满足以下条件，才可以进入下一步系统复测：
 
@@ -75,4 +105,4 @@ F005 不提供“接受自动改名”。必须区分：
 - evidenceRefs 至少一条且是审核者实际查看过的证据；
 - 仍保持 `autoApply=false` 和 `humanVerified=false`。
 
-正式发布还需要后续内容版本、权利、课标映射和签名门禁，不因一次人工核对自动开放。
+正式发布还需要后续内容版本、权利、课标映射和签名门禁，不因一次人工核对或一次 ingestion 自动开放。
