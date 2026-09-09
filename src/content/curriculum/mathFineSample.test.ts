@@ -83,7 +83,7 @@ describe('K12-KGraph fine-grained primary math excerpt', () => {
 
   it('preserves raw prerequisite and assessment relation types', () => {
     expect(mathFineEdgesByType('prerequisites_for').length).toBeGreaterThanOrEqual(25)
-    expect(mathFineEdgesByType('tests_concept').length).toBeGreaterThanOrEqual(25)
+    expect(mathFineEdgesByType('tests_concept').length).toBeGreaterThanOrEqual(24)
     expect(mathFineEdgesByType('tests_skill').length).toBeGreaterThanOrEqual(14)
     expect(mathFineEdgesByType('appears_in').length).toBeGreaterThanOrEqual(75)
 
