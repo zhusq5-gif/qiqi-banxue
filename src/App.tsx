@@ -8,7 +8,7 @@ import { getProfile, getSessionUser, type Profile } from './lib/cloudbase'
 
 const KnowledgeMap = lazy(() => import('./pages/KnowledgeMap'))
 const CurriculumReview = lazy(() => import('./pages/CurriculumReview'))
-const CurriculumVerification = lazy(() => import('./pages/CurriculumVerification'))
+const CurriculumVerification = lazy(() => import('./pages/CurriculumVerificationWave2'))
 const CurriculumStandards = lazy(() => import('./pages/CurriculumStandards'))
 const StandardMappingReview = lazy(() => import('./pages/StandardMappingReview'))
 const MathResearchSample = lazy(() => import('./pages/MathResearchSample'))
