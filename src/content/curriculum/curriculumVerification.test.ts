@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { curriculumSeed } from './curriculum'
+import { mathNormalizedDataset } from './mathNormalized'
 import {
   curriculumGradeVerificationRows,
+  curriculumKnowledgeVerificationItems,
   curriculumRepairTasks,
   curriculumVerificationPolicy,
   curriculumVerificationSummary,
   repairTasksForGrade,
+  verificationItemsForGrade,
   verificationRowsForSubject,
   verificationRowsForWave,
 } from './curriculumVerification'
@@ -28,11 +31,28 @@ describe('subject-grade curriculum verification matrix', () => {
     expect(chinese + english).toBe(459)
   })
 
+  it('creates one item-level verification record for every text entry and every math occurrence', () => {
+    expect(curriculumVerificationSummary.textItemCount).toBe(459)
+    expect(curriculumVerificationSummary.mathOccurrenceItemCount).toBe(mathNormalizedDataset.occurrences.length)
+    expect(curriculumVerificationSummary.itemCount).toBe(459 + mathNormalizedDataset.occurrences.length)
+    expect(curriculumKnowledgeVerificationItems).toHaveLength(curriculumVerificationSummary.itemCount)
+    expect(new Set(curriculumKnowledgeVerificationItems.map((item) => item.id)).size).toBe(curriculumKnowledgeVerificationItems.length)
+    expect(curriculumKnowledgeVerificationItems.every((item) => item.sourcePresent && item.gradeBound)).toBe(true)
+  })
+
+  it('matches each grade aggregate occurrence count to its item-level ledger', () => {
+    for (const row of curriculumGradeVerificationRows) {
+      expect(verificationItemsForGrade(row.subject, row.grade).length, row.id).toBe(row.occurrenceCount)
+    }
+  })
+
   it('runs automated structural/provenance checks for all grade buckets but never calls them human verified', () => {
     expect(curriculumVerificationSummary.automatedCheckedRows).toBe(16)
     expect(curriculumGradeVerificationRows.every((row) => ['passed', 'passed_with_findings'].includes(row.automatedStatus))).toBe(true)
     expect(curriculumGradeVerificationRows.every((row) => row.humanStatus === 'not_started')).toBe(true)
+    expect(curriculumKnowledgeVerificationItems.every((item) => item.humanStatus === 'not_started')).toBe(true)
     expect(curriculumVerificationSummary.humanVerifiedRows).toBe(0)
+    expect(curriculumVerificationSummary.humanVerifiedItems).toBe(0)
     expect(curriculumVerificationSummary.gradeVerificationReadyForOfficialRelease).toBe(false)
   })
 
@@ -48,6 +68,18 @@ describe('subject-grade curriculum verification matrix', () => {
     expect(verificationRowsForSubject('chinese').find((row) => row.grade === 2)?.contentStatus).toBe('patch_proposed')
     expect(verificationRowsForSubject('english').find((row) => row.grade === 3)?.contentStatus).toBe('automated_screened')
     expect(verificationRowsForSubject('math').find((row) => row.grade === 3)?.contentStatus).toBe('automated_screened')
+    expect(verificationItemsForGrade('english', 3).every((item) => item.status === 'automated_screened')).toBe(true)
+    expect(verificationItemsForGrade('math', 3).every((item) => item.status === 'automated_screened')).toBe(true)
+  })
+
+  it('marks only issue-linked wave-1 text items as needs_patch', () => {
+    const wave1ChineseItems = [
+      ...verificationItemsForGrade('chinese', 1),
+      ...verificationItemsForGrade('chinese', 2),
+    ]
+    const needsPatch = wave1ChineseItems.filter((item) => item.status === 'needs_patch')
+    expect(needsPatch).toHaveLength(4)
+    expect(new Set(needsPatch.flatMap((item) => item.registeredIssueIds))).toEqual(new Set(['F001', 'F002', 'F003', 'F004']))
   })
 
   it('turns all seven registered issues into explicit non-auto-applied repair tasks', () => {
