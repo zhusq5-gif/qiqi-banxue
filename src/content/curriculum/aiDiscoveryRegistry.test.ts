@@ -7,11 +7,11 @@ import {
 } from './aiDiscoveryRegistry'
 
 describe('aggregated AI discovery registry', () => {
-  it('combines four source-qualified batches without duplicate candidate IDs', () => {
-    expect(aiDiscoveryBatches).toHaveLength(4)
-    expect(aiDiscoveryRegistrySummary.total).toBe(61)
-    expect(aiDiscoveryRegistrySummary.chinese).toBe(29)
-    expect(aiDiscoveryRegistrySummary.english).toBe(21)
+  it('combines five source-qualified batches without duplicate candidate IDs', () => {
+    expect(aiDiscoveryBatches).toHaveLength(5)
+    expect(aiDiscoveryRegistrySummary.total).toBe(74)
+    expect(aiDiscoveryRegistrySummary.chinese).toBe(37)
+    expect(aiDiscoveryRegistrySummary.english).toBe(26)
     expect(aiDiscoveryRegistrySummary.math).toBe(11)
     expect(new Set(aiDiscoveryCandidatesAll.map((item) => item.id)).size).toBe(aiDiscoveryCandidatesAll.length)
   })
@@ -37,19 +37,20 @@ describe('aggregated AI discovery registry', () => {
     expect(taskGroups).toHaveLength(6)
     expect(taskGroups.every((item) => item.sourceAuthority === 'official_standard_2022' && item.candidateKind === 'knowledge_domain')).toBe(true)
     expect(aiDiscoveryCandidatesAll.find((item) => item.id === 'ai4-chinese-g3-4-regular-script-writing')?.sourceAuthority).toBe('official_standard_2022')
-    expect(aiDiscoveryCandidatesAll.find((item) => item.id === 'ai4-english-g4-phonics-spelling')?.sourceAuthority).toBe('publisher_current_resource')
+    expect(aiDiscoveryCandidatesAll.find((item) => item.id === 'ai5-chinese-g5-reading-speed-strategies')?.sourceAuthority).toBe('publisher_current_resource')
+    expect(aiDiscoveryCandidatesAll.find((item) => item.id === 'ai5-english-g5-phonics-spelling')?.sourceAuthority).toBe('publisher_current_resource')
   })
 
   it('supports UI decision export for expansion candidates without auto-application', () => {
-    const candidate = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai2-english-g5-person-description')!
+    const candidate = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai5-chinese-g5-static-dynamic-description')!
     const decision = createAIDiscoveryDecisionAll(
       candidate.id,
       'promote_to_human_review',
       '审核人',
-      '小学英语教师',
-      '已核对人教社当前五年级上册 Unit 1 资源，建议进入真人精审以确认具体句型和词汇范围。',
+      '小学语文教师',
+      '已重新打开人教社来源核对该语文要素，建议进入真人精审确认教材版次和知识颗粒度。',
       [candidate.sourceRefs[0]],
-      '2026-09-09T14:15:00+08:00',
+      '2026-09-09T17:40:00+08:00',
     )
     expect(decision.status).toBe('unsigned_ai_candidate_review')
     expect(decision.autoApply).toBe(false)
