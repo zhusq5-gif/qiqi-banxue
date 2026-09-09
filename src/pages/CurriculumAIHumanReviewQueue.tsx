@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   AI_PROMOTED_REVIEW_STORAGE_KEY,
   type AIDiscoveryHumanReviewCaseDraft,
@@ -21,6 +21,10 @@ import {
   aiDiscoveryCandidateAllById,
   exactExistingMatches,
 } from '../content/curriculum/aiDiscoveryRegistry'
+import {
+  CONTENT_APPROVAL_HANDOFF_STORAGE_KEY,
+  createContentApprovalHandoff,
+} from '../content/curriculum/contentApprovalHandoff'
 import { subjectLabels, type CurriculumSubject } from '../content/curriculum/curriculum'
 
 function readQueue(): AIDiscoveryHumanReviewCaseDraft[] {
@@ -59,6 +63,7 @@ const decisionLabels: Record<AIHumanReviewDecision, string> = {
 }
 
 export default function CurriculumAIHumanReviewQueue() {
+  const navigate = useNavigate()
   const [queue, setQueue] = useState<AIDiscoveryHumanReviewCaseDraft[]>(() => readQueue())
   const [subject, setSubject] = useState<'all' | CurriculumSubject>('all')
   const [selectedId, setSelectedId] = useState(queue[0]?.id ?? '')
@@ -88,8 +93,26 @@ export default function CurriculumAIHumanReviewQueue() {
 
   const visible = useMemo(() => queue.filter((item) => subject === 'all' || item.subject === subject), [queue, subject])
   const selected = queue.find((item) => item.id === selectedId) ?? visible[0] ?? null
+  const selectedVisibleIndex = selected ? visible.findIndex((item) => item.id === selected.id) : -1
   const currentCandidate = selected ? aiDiscoveryCandidateAllById(selected.candidateId) : null
   const exactMatches = currentCandidate ? exactExistingMatches(currentCandidate) : []
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
+      if (event.key === 'j' || event.key === 'ArrowDown') {
+        event.preventDefault()
+        moveSelection(1)
+      }
+      if (event.key === 'k' || event.key === 'ArrowUp') {
+        event.preventDefault()
+        moveSelection(-1)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [visible, selectedId])
 
   function resetWorkflow(next: AIDiscoveryHumanReviewCaseDraft | null) {
     setActivation(null)
@@ -112,6 +135,13 @@ export default function CurriculumAIHumanReviewQueue() {
   function chooseDraft(id: string) {
     setSelectedId(id)
     resetWorkflow(queue.find((item) => item.id === id) ?? null)
+  }
+
+  function moveSelection(delta: number) {
+    if (!visible.length) return
+    const currentIndex = selectedVisibleIndex >= 0 ? selectedVisibleIndex : 0
+    const nextIndex = Math.min(visible.length - 1, Math.max(0, currentIndex + delta))
+    if (nextIndex !== currentIndex || selectedId !== visible[nextIndex].id) chooseDraft(visible[nextIndex].id)
   }
 
   function removeDraft(id: string) {
@@ -197,6 +227,26 @@ export default function CurriculumAIHumanReviewQueue() {
     setMessage(result.accepted ? '二次回归通过：只生成 candidate snapshot，下一门是 content approval gate。' : result.errors.join(' · '))
   }
 
+  function handoffToContentApproval() {
+    if (!selected || !regression?.accepted || !regression.candidateSnapshot) {
+      setMessage('只有 secondary regression 通过的 candidate snapshot 才能交接到 Content Approval。')
+      return
+    }
+    try {
+      const handoff = createContentApprovalHandoff({
+        candidateId: `content:${selected.candidateId}`,
+        subject: selected.subject,
+        snapshot: regression.candidateSnapshot,
+        evidenceRefs: parseLines(decisionEvidence),
+        source: 'ai_human_review',
+      })
+      window.localStorage.setItem(CONTENT_APPROVAL_HANDOFF_STORAGE_KEY, JSON.stringify(handoff))
+      navigate('/knowledge-map/content-approval')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Content Approval handoff 失败')
+    }
+  }
+
   return (
     <div className="mx-auto min-h-full max-w-7xl px-4 pb-20 pt-5">
       <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -224,9 +274,11 @@ export default function CurriculumAIHumanReviewQueue() {
         <strong>正式状态：</strong>本流程中的 case activation、decision v2、regression passed 都是治理中间态；固定 `autoApply=false / humanVerified=false`。真正批准还需要独立 curriculum content approval gate。
       </section>
 
-      <div className="mt-4 flex flex-wrap gap-2 rounded-2xl bg-white p-4 shadow-sm">
+      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl bg-white p-4 shadow-sm">
         <select value={subject} onChange={(event) => setSubject(event.target.value as 'all' | CurriculumSubject)} className="h-10 rounded-xl border border-stone-200 px-3 text-sm"><option value="all">全部学科</option><option value="chinese">语文</option><option value="english">英语</option><option value="math">数学</option></select>
-        <span className="self-center text-xs font-bold text-stone-400">当前 {visible.length} 条</span>
+        <button type="button" onClick={() => moveSelection(-1)} disabled={selectedVisibleIndex <= 0} className="rounded-full bg-stone-100 px-3 py-2 text-xs font-black text-stone-600 disabled:opacity-40">↑ / K 上一条</button>
+        <button type="button" onClick={() => moveSelection(1)} disabled={selectedVisibleIndex < 0 || selectedVisibleIndex >= visible.length - 1} className="rounded-full bg-stone-100 px-3 py-2 text-xs font-black text-stone-600 disabled:opacity-40">↓ / J 下一条</button>
+        <span className="text-xs font-bold text-stone-400">{selectedVisibleIndex >= 0 ? `${selectedVisibleIndex + 1}/${visible.length}` : `0/${visible.length}`} · 输入框聚焦时快捷键停用</span>
       </div>
 
       {queue.length === 0 ? (
@@ -272,7 +324,7 @@ export default function CurriculumAIHumanReviewQueue() {
                 <textarea value={proposalRationale} onChange={(event) => setProposalRationale(event.target.value)} rows={3} placeholder="为什么应创建新的 framework anchor / KnowledgeNode 候选" className="mt-3 w-full rounded-xl border border-stone-200 p-3 text-sm leading-6" />
                 <div className="mt-3 rounded-2xl bg-amber-50 p-4"><div className="text-xs font-black text-amber-700">语义重复人工检查（必填）</div><select value={semanticDisposition} onChange={(event) => setSemanticDisposition(event.target.value as AISemanticDuplicateDisposition)} className="mt-2 h-10 w-full rounded-xl border border-amber-100 bg-white px-3 text-sm"><option value="no_obvious_duplicate">未发现明显语义重复</option><option value="possible_duplicate_reviewed">存在可能重复，已记录关联节点</option></select><textarea value={semanticNote} onChange={(event) => setSemanticNote(event.target.value)} rows={3} placeholder="说明检查过哪些相近概念，以及为什么仍应新建/继续候选" className="mt-2 w-full rounded-xl border border-amber-100 bg-white p-3 text-sm leading-6" />{semanticDisposition === 'possible_duplicate_reviewed' ? <textarea value={possibleExistingIds} onChange={(event) => setPossibleExistingIds(event.target.value)} rows={2} placeholder="可能重复的 existing ID，每行一条" className="mt-2 w-full rounded-xl border border-amber-100 bg-white p-3 font-mono text-xs" /> : null}</div>
                 <button type="button" onClick={runNewKnowledgeProposal} className="mt-3 rounded-full bg-emerald-600 px-4 py-2 text-sm font-black text-white">运行 proposal + secondary regression</button>
-                {regression ? <div className={`mt-4 rounded-2xl p-4 text-xs leading-6 ${regression.accepted ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-700'}`}><div className="font-black">{regression.accepted ? '二次回归通过 · readyForApprovalGate' : '候选被阻断'}</div>{regression.checks.map((check) => <div key={check.id}>{check.passed ? '✓' : '✕'} {check.id} · {check.detail}</div>)}{regression.errors.map((error) => <div key={error}>• {error}</div>)}{regression.candidateSnapshot ? <button type="button" onClick={() => downloadJson(`ai-new-knowledge-${selected.candidateId}.json`, regression.candidateSnapshot)} className="mt-3 rounded-full bg-white px-3 py-1.5 text-xs font-black text-emerald-700">导出 candidate snapshot 审计副本</button> : null}</div> : null}
+                {regression ? <div className={`mt-4 rounded-2xl p-4 text-xs leading-6 ${regression.accepted ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-700'}`}><div className="font-black">{regression.accepted ? '二次回归通过 · readyForApprovalGate' : '候选被阻断'}</div>{regression.checks.map((check) => <div key={check.id}>{check.passed ? '✓' : '✕'} {check.id} · {check.detail}</div>)}{regression.errors.map((error) => <div key={error}>• {error}</div>)}{regression.candidateSnapshot ? <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => downloadJson(`ai-new-knowledge-${selected.candidateId}.json`, regression.candidateSnapshot)} className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-emerald-700">导出 candidate snapshot 审计副本</button><button type="button" onClick={handoffToContentApproval} className="rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-black text-white">带入 Content Approval →</button></div> : null}</div> : null}
               </section> : null}
 
               <section className="flex flex-wrap items-center gap-2 rounded-3xl bg-white p-5 shadow-sm"><button type="button" onClick={() => downloadJson(`ai-human-review-case-${selected.candidateId}.json`, selected)} className="rounded-full bg-stone-100 px-4 py-2 text-sm font-black text-stone-600">导出 case draft</button><button type="button" onClick={() => removeDraft(selected.id)} className="rounded-full bg-rose-100 px-4 py-2 text-sm font-black text-rose-700">从本地队列移除</button>{message ? <span className="text-xs font-bold text-stone-500">{message}</span> : null}</section>
