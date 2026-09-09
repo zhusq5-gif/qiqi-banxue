@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import StandardEvidencePanel from '../components/curriculum/StandardEvidencePanel'
 import { curriculumSeed, entryById, semesterLabel, subjectLabels } from '../content/curriculum/curriculum'
+import { repairProposalForIssue } from '../content/curriculum/curriculumRepairProposals'
 import { curriculumRepairTasks } from '../content/curriculum/curriculumVerification'
 
 type RevisionDraft = {
@@ -9,44 +10,65 @@ type RevisionDraft = {
   nodeId: string
   proposedLabel: string
   proposedLearningDemand: string
+  proposedQuestionTypes: string[]
   reviewerNote: string
   updatedAt: string
 }
 
 type DraftStore = {
-  schemaVersion: 1
+  schemaVersion: 2
   drafts: Record<string, RevisionDraft>
 }
 
 const STORAGE_KEY = 'qiqi.curriculum-review.v1'
 
 function emptyStore(): DraftStore {
-  return { schemaVersion: 1, drafts: {} }
+  return { schemaVersion: 2, drafts: {} }
+}
+
+function makeDraft(issueId: string): RevisionDraft {
+  const issue = curriculumSeed.issues.find((item) => item.id === issueId)
+  const entry = issue ? entryById(issue.nodeId) : null
+  const proposal = repairProposalForIssue(issueId)
+  return {
+    issueId,
+    nodeId: issue?.nodeId ?? '',
+    proposedLabel: proposal?.proposedLabel ?? entry?.label ?? '',
+    proposedLearningDemand: proposal?.proposedLearningDemand ?? entry?.learningDemand ?? '',
+    proposedQuestionTypes: proposal?.proposedQuestionTypes.slice() ?? entry?.questionTypes.slice() ?? [],
+    reviewerNote: '',
+    updatedAt: '',
+  }
 }
 
 function readStore(): DraftStore {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     if (!raw) return emptyStore()
-    const parsed = JSON.parse(raw) as DraftStore
-    if (parsed.schemaVersion !== 1 || !parsed.drafts) return emptyStore()
-    return parsed
+    const parsed = JSON.parse(raw) as { schemaVersion?: number; drafts?: Record<string, Partial<RevisionDraft>> }
+    if (!parsed.drafts) return emptyStore()
+    const drafts: Record<string, RevisionDraft> = {}
+    for (const [issueId, stored] of Object.entries(parsed.drafts)) {
+      const baseline = makeDraft(issueId)
+      drafts[issueId] = {
+        ...baseline,
+        ...stored,
+        proposedQuestionTypes: Array.isArray(stored.proposedQuestionTypes)
+          ? stored.proposedQuestionTypes.filter((item): item is string => typeof item === 'string')
+          : baseline.proposedQuestionTypes,
+      }
+    }
+    return { schemaVersion: 2, drafts }
   } catch {
     return emptyStore()
   }
 }
 
-function makeDraft(issueId: string): RevisionDraft {
-  const issue = curriculumSeed.issues.find((item) => item.id === issueId)
-  const entry = issue ? entryById(issue.nodeId) : null
-  return {
-    issueId,
-    nodeId: issue?.nodeId ?? '',
-    proposedLabel: entry?.label ?? '',
-    proposedLearningDemand: entry?.learningDemand ?? '',
-    reviewerNote: '',
-    updatedAt: '',
-  }
+function parseQuestionTypes(value: string) {
+  return value
+    .split(/[,，、\n]+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
 }
 
 export default function CurriculumReview() {
@@ -59,11 +81,12 @@ export default function CurriculumReview() {
   const issue = useMemo(() => curriculumSeed.issues.find((item) => item.id === selectedIssueId) ?? null, [selectedIssueId])
   const entry = issue ? entryById(issue.nodeId) : null
   const repairTask = issue ? curriculumRepairTasks.find((task) => task.issueId === issue.id) ?? null : null
+  const repairProposal = issue ? repairProposalForIssue(issue.id) : null
 
   useEffect(() => {
     const stored = readStore().drafts[selectedIssueId]
     setDraft(stored ?? makeDraft(selectedIssueId))
-    setSavedMessage(stored ? '已恢复本地草稿' : '')
+    setSavedMessage(stored ? '已恢复本地草稿' : '已载入候选修补建议')
   }, [selectedIssueId])
 
   function saveDraft() {
@@ -82,22 +105,24 @@ export default function CurriculumReview() {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store))
     setDraft(makeDraft(selectedIssueId))
     setSavedCount(Object.keys(store.drafts).length)
-    setSavedMessage('已恢复种子基线')
+    setSavedMessage('已恢复候选修补基线')
   }
 
   function exportDraft() {
     if (!issue || !entry) return
     const payload = {
-      schema: 'qiqi-curriculum-revision-draft/v1',
+      schema: 'qiqi-curriculum-revision-draft/v2',
       exportedAt: new Date().toISOString(),
       status: 'draft_only',
       warning: '此文件不是专家审核记录，不得直接进入正式发布库。',
       verificationTask: repairTask,
+      candidateProposal: repairProposal,
       issue,
       original: {
         id: entry.id,
         label: entry.label,
         learningDemand: entry.learningDemand,
+        questionTypes: entry.questionTypes,
         sourcePath: entry.sourcePath,
         sourcePointer: entry.sourcePointer,
       },
@@ -131,7 +156,7 @@ export default function CurriculumReview() {
 
       <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
         <span className="font-black">治理提醒：</span>
-        <span>本地已保存 {savedCount} 条草稿。导出的 JSON 仍是 draft_only，必须经过“修补后复测 → 真人学科复核 → 发布门禁”后才能进入正式库。</span>
+        <span>本地已保存 {savedCount} 条草稿。候选 patch 和导出的 JSON 都是 draft_only，必须经过“修补后复测 → 真人学科复核 → 发布门禁”后才能进入正式库。</span>
       </div>
 
       <section className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -179,6 +204,17 @@ export default function CurriculumReview() {
                 </section>
               ) : null}
 
+              {repairProposal ? (
+                <section className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/60 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-xs font-black text-amber-700">系统候选 patch · 仅供教研确认</div>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-amber-700">candidate_patch</span>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-stone-700">{repairProposal.rationale}</p>
+                  <div className="mt-2 text-[10px] font-black text-rose-600">不会自动写回；F001/F006 只移除已知异常“口算”，不会自动猜替代题型。</div>
+                </section>
+              ) : null}
+
               <section className="mt-5 grid gap-4 xl:grid-cols-2">
                 <div className="rounded-2xl bg-stone-50 p-4">
                   <h3 className="text-xs font-black text-stone-500">问题发现</h3>
@@ -190,6 +226,7 @@ export default function CurriculumReview() {
                   <h3 className="text-xs font-black text-stone-400">不可变原始证据</h3>
                   <p className="mt-2 text-sm font-bold text-stone-800">{entry.label}</p>
                   <p className="mt-2 text-sm leading-6 text-stone-600">{entry.learningDemand}</p>
+                  <div className="mt-3 text-[11px] leading-5 text-stone-500"><span className="font-black">原始题型：</span>{entry.questionTypes.join('、')}</div>
                   <div className="mt-3 text-[11px] leading-5 text-stone-400"><div>{entry.sourcePath}</div><div>{entry.sourcePointer}</div></div>
                 </div>
               </section>
@@ -198,19 +235,22 @@ export default function CurriculumReview() {
 
               <section className="mt-5 rounded-2xl border border-amber-100 bg-amber-50/50 p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="font-black text-stone-900">修订草稿</h3>
+                  <h3 className="font-black text-stone-900">修订草稿 v2</h3>
                   {savedMessage ? <span className="text-xs font-bold text-amber-700">{savedMessage}</span> : null}
                 </div>
                 <label className="mt-4 block text-xs font-black text-stone-500">建议知识点名称</label>
                 <input value={draft.proposedLabel} onChange={(event) => setDraft((current) => ({ ...current, proposedLabel: event.target.value }))} className="mt-1 h-11 w-full rounded-xl border border-amber-200 bg-white px-3 text-sm outline-none focus:border-amber-400" />
                 <label className="mt-4 block text-xs font-black text-stone-500">建议学习要求</label>
                 <textarea value={draft.proposedLearningDemand} onChange={(event) => setDraft((current) => ({ ...current, proposedLearningDemand: event.target.value }))} rows={5} className="mt-1 w-full rounded-xl border border-amber-200 bg-white p-3 text-sm leading-6 outline-none focus:border-amber-400" />
+                <label className="mt-4 block text-xs font-black text-stone-500">建议题型</label>
+                <input value={draft.proposedQuestionTypes.join('、')} onChange={(event) => setDraft((current) => ({ ...current, proposedQuestionTypes: parseQuestionTypes(event.target.value) }))} placeholder="使用逗号、顿号或换行分隔题型" className="mt-1 h-11 w-full rounded-xl border border-amber-200 bg-white px-3 text-sm outline-none focus:border-amber-400" />
+                <p className="mt-1 text-[10px] text-stone-400">题型字段现已进入修补草稿和导出 JSON；任何替换或新增仍需学科教研确认。</p>
                 <label className="mt-4 block text-xs font-black text-stone-500">教研备注</label>
                 <textarea value={draft.reviewerNote} onChange={(event) => setDraft((current) => ({ ...current, reviewerNote: event.target.value }))} rows={3} placeholder="记录修订理由、需要补查的教材或课标证据。" className="mt-1 w-full rounded-xl border border-amber-200 bg-white p-3 text-sm leading-6 outline-none focus:border-amber-400" />
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button type="button" onClick={saveDraft} className="rounded-full bg-amber-500 px-4 py-2 text-sm font-black text-white">保存本地草稿</button>
                   <button type="button" onClick={exportDraft} className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">导出草稿 JSON</button>
-                  <button type="button" onClick={resetDraft} className="rounded-full bg-white px-4 py-2 text-sm font-bold text-stone-600 shadow-sm">恢复种子基线</button>
+                  <button type="button" onClick={resetDraft} className="rounded-full bg-white px-4 py-2 text-sm font-bold text-stone-600 shadow-sm">恢复候选修补基线</button>
                 </div>
                 {draft.updatedAt ? <p className="mt-3 text-[11px] text-stone-400">最近本地保存：{draft.updatedAt}</p> : null}
               </section>
