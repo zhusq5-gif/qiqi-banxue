@@ -20,16 +20,17 @@
 5. **填写理由和证据**：至少记录审核人姓名、角色、决策、理由、实际查阅的证据引用和时间。
 6. **导出 unsigned decision**：人工决定不直接改 seed，不直接产生 `expert_verified`。
 7. **运行 decision ingestion**：进入 `/knowledge-map/human-review/ingest`，上传或粘贴审核 JSON；系统重新检查当前 case、allowedDecisions、evidenceRefs，并重新运行候选修补检查。
-8. **当前 case 重新确认**：v1 decision 只用于预览/复测。正式向后流转时建议进入 `/knowledge-map/human-review/current`，重新基于当前 case 生成 decision v2。
-9. **处理 ingestion 结果**：可安全复测的决定生成 candidate snapshot；需要拆分知识点、人工改写、curated mapping 或 Curriculum relation 的决定进入 `structured_proposal_required`，不会自动生成结构化数据。
-10. **系统二次回归**：候选快照仍为 `autoApply=false`，继续跑 CI/数据门禁后才能进入后续正式流程。
+8. **当前 case 重新确认**：v1 decision 只用于预览/复测。正式向后流转时进入 `/knowledge-map/human-review/current`，重新基于当前 case 生成 decision v2。
+9. **需要结构变化时提交 proposal**：`revise_candidate / split_nodes / rename_and_reframe / propose_curated_mapping / propose_curriculum_relation / split_identity_candidate` 进入 `/knowledge-map/human-review/proposal`。
+10. **执行 structured secondary regression**：系统检查 source/reference closure、raw provenance、候选 prerequisite 环、Occurrence 分配等；通过后只生成 candidate snapshot v2。
+11. **进入后续内容审批门禁**：候选快照仍为 `autoApply=false`、`humanVerified=false`，不能直接发布。
 
 ## 3. 决策边界
 
 ### 内容修补
 
 - `accept_candidate`：候选修补与实际教材/来源一致。
-- `revise_candidate`：方向正确但候选文字/分类需要人工修改；需要后续结构化提案，不能仅凭一个 decision 字段自动改数据。
+- `revise_candidate`：方向正确但候选文字/分类需要人工修改；必须提交 `content_revision` structured proposal。
 - `defer`：证据不足或需要更高层级教研判断。
 
 ### F005 概念边界
@@ -41,6 +42,8 @@ F005 不提供“接受自动改名”。必须区分：
 
 允许决定：`split_nodes`、`rename_and_reframe`、`retain_single_node`、`defer`。
 
+`split_nodes` 必须进一步提交 `concept_split` proposal；系统会检查源节点、candidate IDs、Occurrence 继承和 redirect plan。
+
 ### 数学 Assessment 绑定
 
 当 Exercise 有章节定位但没有 `tests_concept/tests_skill`：
@@ -48,29 +51,37 @@ F005 不提供“接受自动改名”。必须区分：
 - 先检查完整 K12-KGraph raw source；
 - 如果只是本项目 excerpt 漏边，补回**可定位的原始边**；
 - 如果 raw source 中没有对应边，保持 `keep_unmapped` 或 `needs_source_evidence`；
-- 教研认为应该绑定时只能提交 `propose_curated_mapping`，不得伪装成 K12-KGraph raw edge。
+- 教研认为应该绑定时只能提交 `propose_curated_mapping` → `assessment_mapping` proposal，不得伪装成 K12-KGraph raw edge。
 
 ### 数学跨年级关系
 
 原始 `relates_to / prerequisites_for / is_a` 原样保留。人工可决定是否只保留 raw relation，或提出新的 Curriculum relation 候选；但原始 `relates_to` 不能因为“看起来像进阶”就自动改为 prerequisite。
 
+`curriculum_relation` proposal 必须引用当前 case 的 raw evidence，并保持同一对 KnowledgeNode；如果提出 `prerequisite_for`，还必须通过有向图环检测。
+
 ### 同一知识跨年级复用
 
 先判断是否仍是同一概念身份，再比较不同年级 Occurrence 的学习要求。默认不要因为年级变化就复制 KnowledgeNode。
 
-## 4. 本轮审核包
+只有当真人选择 `split_identity_candidate`，且 source KnowledgeNode 至少有两个可定位 Occurrence，才可以提交 `identity_split` proposal；所有 Occurrence 必须且只能分配一次。
+
+## 4. 本轮审核包与页面
+
+审核文件：
 
 - `review-packets/WAVE1_CHINESE_REVIEW.md`：F001–F004
 - `review-packets/WAVE2_LANGUAGE_REVIEW.md`：F005–F007
 - `review-packets/WAVE2_MATH_REVIEW.md`：数学 G4/G5 Assessment / relation / occurrence 专项
 - `review-packets/HUMAN_REVIEW_DECISION_TEMPLATE.json`：v1 人工决定模板
 - `review-packets/HUMAN_REVIEW_DECISION_V2_TEMPLATE.json`：绑定当前 caseState 的 v2 模板
+- `STRUCTURED_PROPOSAL_GUIDE.md`：五类 structured proposal 的字段、约束、二次回归和结果解释
 
 系统页面入口：
 
 - `/knowledge-map/human-review`：查看 case、填写并导出 v1 真人审核决定。
 - `/knowledge-map/human-review/ingest`：导入 v1 决定、运行接收校验与二次回归、导出候选快照。
 - `/knowledge-map/human-review/current`：基于当前 case 重新确认并生成 decision v2；页面会立即运行 v2 ingestion。
+- `/knowledge-map/human-review/proposal`：导入 decision v2 + structured proposal，运行 proposal validation、reference closure 和 secondary regression。
 
 ## 5. v1 与 v2 的区别
 
@@ -96,13 +107,7 @@ v1 适合做复测、发现冲突和准备候选内容，但不能直接进入�
 
 v2 ingestion 会把这些字段与当前 caseState **逐项、按顺序比对**。任何一项变化都会返回 `CURRENT_CASE_STATE_MISMATCH`，要求重新核对当前 case。
 
-只有满足：
-
-1. caseState 完全一致；
-2. 基础 ingestion 通过；
-3. `accept_candidate` 等可直接执行的决定重新通过二次回归；
-
-才会得到 candidate snapshot v2，并出现 `readyForApprovalGate=true`。
+caseState 一致、基础 ingestion 通过且安全候选重新通过二次回归后，才会得到 candidate snapshot v2，并出现 `readyForApprovalGate=true`。
 
 这仍然**不是** `humanVerified`，也不代表可以正式发布。
 
@@ -121,28 +126,56 @@ v2 ingestion 会把这些字段与当前 caseState **逐项、按顺序比对**�
 
 `accept_candidate` 还必须重新通过 `curriculumRepairRecheck` 才会生成 content candidate snapshot。
 
-## 7. structured proposal 规则
+## 7. structured proposal 与二次回归
 
-以下决定不会因为 v1/v2 合法就自动创建新数据：
+以下决定必须提供结构化 proposal：
 
-- `revise_candidate`
-- `split_nodes`
-- `rename_and_reframe`
-- `propose_curated_mapping`
-- `propose_curriculum_relation`
-- `split_identity_candidate`
+- `revise_candidate` → `content_revision`
+- `split_nodes` → `concept_split`
+- `rename_and_reframe` → `content_revision`
+- `propose_curated_mapping` → `assessment_mapping`
+- `propose_curriculum_relation` → `curriculum_relation`
+- `split_identity_candidate` → `identity_split`
 
-这些决定统一进入 `structured_proposal_required`。下一阶段会为它们分别定义内容 patch、ChangeSet、Assessment mapping、Curriculum relation 和 KnowledgeNode split schema。
+系统先运行 `qiqi-curriculum-human-review-structured-proposal-validation/v1`，再运行 `qiqi-curriculum-human-review-structured-regression/v1`。
+
+重点检查包括：
+
+- proposal 和当前 decision v2/case 完全绑定；
+- F005 不能把拆分决定套到其他节点；
+- Assessment case 不能映射另一个 Exercise；
+- curated mapping 保持 `qiqi_curated_review` provenance，raw edge immutable；
+- Curriculum relation 的 raw evidence 必须对应同一对 KnowledgeNode；
+- `prerequisite_for` 候选必须无环；
+- identity split 必须有足够 Occurrence，且 reference closure 完整；
+- seed/raw/source node 在候选阶段保持 immutable。
+
+全部通过后生成：
+
+`qiqi-curriculum-structured-candidate-snapshot/v2`
+
+并进入：
+
+`curriculum_content_approval_gate`
+
+但仍固定：
+
+- `autoApply=false`
+- `humanVerified=false`
+
+详细字段见 `STRUCTURED_PROPOSAL_GUIDE.md`。
 
 ## 8. 通过条件
 
-一个 case 只有满足以下条件，才可以进入下一步系统复测：
+一个 case 要进入后续内容审批门禁，至少需要：
 
 - 原始证据可定位；
 - 审核者身份/角色已填写；
-- decision 属于该 case 允许的决策集合；
-- rationale 非空且说明教学依据；
-- evidenceRefs 至少一条且是审核者实际查看过的证据；
-- 仍保持 `autoApply=false` 和 `humanVerified=false`。
+- decision 属于当前 case 允许集合；
+- rationale 与 evidenceRefs 完整；
+- decision v2 的 caseState 与当前 case 一致；
+- 如需结构变更，structured proposal validation 通过；
+- secondary regression 通过；
+- `autoApply=false`、`humanVerified=false` 仍保持不变。
 
-正式发布还需要后续内容版本、权利、课标映射和签名门禁，不因一次人工核对、一次 ingestion 或 `readyForApprovalGate=true` 自动开放。
+正式发布还需要后续内容签名、教材版本、权利、课标映射等门禁，不因一次人工核对、一次 ingestion 或 `readyForApprovalGate=true` 自动开放。
