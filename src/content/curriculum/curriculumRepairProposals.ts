@@ -25,7 +25,7 @@ function questionTypesFor(issueId: string, questionTypes: string[]) {
 }
 
 function learningDemandFor(issueId: string, learningDemand: string) {
-  if (issueId === 'F007') return learningDemand.replaceAll('回。答', '回答')
+  if (issueId === 'F007') return learningDemand.split('回。答').join('回答')
   return learningDemand
 }
 
