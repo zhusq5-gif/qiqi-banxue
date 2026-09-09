@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  mathWave2ConfirmedUnlinkedInGradeBlock,
   mathWave2ResolvedExcerptGaps,
   mathWave2SourceAudit,
   mathWave2SourceAuditRecord,
-  mathWave2SourceUnlinkedCandidates,
 } from './mathWave2SourceAudit'
 
 describe('wave 2 math raw source audit registry', () => {
@@ -15,12 +15,15 @@ describe('wave 2 math raw source audit registry', () => {
     expect(mathWave2ResolvedExcerptGaps).toHaveLength(1)
   })
 
-  it('keeps exe20 as source-unlinked candidate rather than synthesizing a binding', () => {
+  it('keeps exe20 explicitly unmapped after auditing the contiguous grade-4 tests block', () => {
     const record = mathWave2SourceAuditRecord('math_4a_rjb_exe20')
-    expect(record?.status).toBe('source_unlinked_candidate')
+    expect(record?.status).toBe('source_unlinked_in_grade_tests_block')
     expect(record?.inspectedTestsRange).toBe('math.json L65769-L66025')
     expect(record?.resolution).toBeNull()
-    expect(mathWave2SourceUnlinkedCandidates).toHaveLength(1)
+    expect(record?.note).toContain('exe19')
+    expect(record?.note).toContain('exe26')
+    expect(record?.note).toContain('curated mapping proposal')
+    expect(mathWave2ConfirmedUnlinkedInGradeBlock).toHaveLength(1)
     expect(mathWave2SourceAudit.rule).toContain('不得凭题意合成')
   })
 })
