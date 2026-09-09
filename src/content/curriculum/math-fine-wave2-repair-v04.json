@@ -1,0 +1,27 @@
+{
+  "datasetVersion": "k12-kgraph-math-fine-v0.4-wave2-repair",
+  "status": "research_only",
+  "subject": "math",
+  "nodes": [
+    {
+      "id": "math_2a_rjb_cpt12",
+      "label": "Concept",
+      "name": "直角",
+      "properties": {
+        "definition": "与三角尺上直角一样大的角。",
+        "importance": "重要"
+      },
+      "sourceLocator": "math.json L2793-L2802"
+    }
+  ],
+  "edges": [
+    {
+      "id": "fine-v4-wave2-e01",
+      "source": "math_4a_rjb_exe8",
+      "target": "math_2a_rjb_cpt12",
+      "type": "tests_concept",
+      "evidence": "原始图谱 tests_concept 将“用量角器量出一个直角的度数是多少？”指向“直角”。",
+      "sourceLocator": "math.json L65814-L65822"
+    }
+  ]
+}
