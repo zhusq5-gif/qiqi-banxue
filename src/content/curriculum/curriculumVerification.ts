@@ -3,11 +3,13 @@ import { mathNormalizedDataset } from './mathNormalized'
 
 export type VerificationWave = 1 | 2 | 3
 export type AutomatedVerificationStatus = 'passed' | 'passed_with_findings'
+export type CoverageStatus = 'present' | 'gap'
 export type ContentVerificationStatus =
   | 'automated_screened'
   | 'patch_proposed'
   | 'queued_patch_review'
   | 'queued'
+  | 'coverage_gap'
   | 'recheck_pending'
 export type HumanVerificationStatus = 'not_started' | 'pending' | 'verified'
 export type RepairTaskStatus = 'patch_proposed' | 'queued' | 'recheck_pending' | 'verified'
@@ -18,6 +20,7 @@ export interface GradeVerificationRow {
   subject: CurriculumSubject
   grade: number
   wave: VerificationWave
+  coverageStatus: CoverageStatus
   knowledgePointCount: number
   occurrenceCount: number
   assessmentCount: number
@@ -62,6 +65,17 @@ export interface CurriculumRepairTask {
   sourcePointer: string
 }
 
+export interface CurriculumCoverageTask {
+  id: string
+  subject: CurriculumSubject
+  grade: number
+  wave: VerificationWave
+  status: 'queued' | 'in_progress' | 'recheck_pending' | 'verified'
+  title: string
+  action: string
+  blocking: true
+}
+
 const waveAssignments: Record<string, { wave: VerificationWave; reason: string }> = {
   'chinese:1': { wave: 1, reason: '已登记2条内容问题，且低年级基础性强，优先修补。' },
   'chinese:2': { wave: 1, reason: '已登记2条内容问题，优先完成标题/例词一致性复核。' },
@@ -79,7 +93,7 @@ const waveAssignments: Record<string, { wave: VerificationWave; reason: string }
   'chinese:6': { wave: 3, reason: '进入毕业年级完整性、进阶关系与课标复核。' },
   'english:5': { wave: 3, reason: '进入全面内容复核与跨年级表达进阶检查。' },
   'math:1': { wave: 3, reason: '低年级数学当前为研究样板，后续补全后逐项复核。' },
-  'math:2': { wave: 3, reason: '低年级数学当前为研究样板，后续补全后逐项复核。' },
+  'math:2': { wave: 3, reason: '当前只有二年级概念被高年级章节复用，缺少二年级自身 Occurrence，先补覆盖再核对。' },
   'math:6': { wave: 3, reason: '用于分数、圆、圆柱圆锥、扇形统计图的毕业年级收口复核。' },
 }
 
@@ -107,10 +121,12 @@ function textRow(subject: Extract<CurriculumSubject, 'chinese' | 'english'>, gra
   )
   const missingSourceCount = entries.filter((entry) => !entry.sourcePath || !entry.sourcePointer).length
   const normalizedDuplicateLabelCount = duplicateExcess(entries.map((entry) => entry.label))
-  const hasFindings = issues.length > 0 || missingSourceCount > 0 || normalizedDuplicateLabelCount > 0
+  const coverageStatus: CoverageStatus = entries.length > 0 ? 'present' : 'gap'
+  const hasFindings = coverageStatus === 'gap' || issues.length > 0 || missingSourceCount > 0 || normalizedDuplicateLabelCount > 0
   return {
     subject,
     grade,
+    coverageStatus,
     knowledgePointCount: entries.length,
     occurrenceCount: entries.length,
     assessmentCount: 0,
@@ -138,10 +154,12 @@ function mathRow(grade: number): Omit<GradeVerificationRow, 'id' | 'wave' | 'pri
   const relationCandidateCount = mathNormalizedDataset.relations.filter(
     (relation) => knowledgeNodeIds.includes(relation.fromKnowledgeNodeId) || knowledgeNodeIds.includes(relation.toKnowledgeNodeId),
   ).length
-  const hasFindings = missingSourceCount > 0 || unresolvedAssessmentTargetCount > 0 || normalizedDuplicateLabelCount > 0
+  const coverageStatus: CoverageStatus = occurrences.length > 0 ? 'present' : 'gap'
+  const hasFindings = coverageStatus === 'gap' || missingSourceCount > 0 || unresolvedAssessmentTargetCount > 0 || normalizedDuplicateLabelCount > 0
   return {
     subject: 'math',
     grade,
+    coverageStatus,
     knowledgePointCount: knowledgeNodeIds.length,
     occurrenceCount: occurrences.length,
     assessmentCount: assessments.length,
@@ -160,16 +178,20 @@ function rowFor(subject: CurriculumSubject, grade: number): GradeVerificationRow
   if (!assignment) throw new Error(`Missing verification wave assignment for ${key}`)
   const base = subject === 'math' ? mathRow(grade) : textRow(subject, grade)
   const executed = wave1Executed.has(key)
-  const contentStatus: ContentVerificationStatus = executed
-    ? (base.registeredIssueCount > 0 ? 'patch_proposed' : 'automated_screened')
-    : (base.registeredIssueCount > 0 ? 'queued_patch_review' : 'queued')
-  const nextAction = contentStatus === 'patch_proposed'
-    ? '按修补任务处理已登记问题，修补后进入逐条内容复核与回归。'
-    : contentStatus === 'automated_screened'
-      ? '继续进行逐条语义/教材适配核对；机器筛查通过不等于教研已核。'
-      : base.registeredIssueCount > 0
-        ? '进入对应波次时先处理已登记问题，再逐条核对。'
-        : '进入对应波次后执行逐条内容核对、课标映射核对与真人复核。'
+  const contentStatus: ContentVerificationStatus = base.coverageStatus === 'gap'
+    ? 'coverage_gap'
+    : executed
+      ? (base.registeredIssueCount > 0 ? 'patch_proposed' : 'automated_screened')
+      : (base.registeredIssueCount > 0 ? 'queued_patch_review' : 'queued')
+  const nextAction = base.coverageStatus === 'gap'
+    ? '先补齐该年级可定位的知识点与 Occurrence，再执行逐条核对；当前缺口阻断正式发布。'
+    : contentStatus === 'patch_proposed'
+      ? '按修补任务处理已登记问题，修补后进入逐条内容复核与回归。'
+      : contentStatus === 'automated_screened'
+        ? '继续进行逐条语义/教材适配核对；机器筛查通过不等于教研已核。'
+        : base.registeredIssueCount > 0
+          ? '进入对应波次时先处理已登记问题，再逐条核对。'
+          : '进入对应波次后执行逐条内容核对、课标映射核对与真人复核。'
   return {
     id: `verify:${key}`,
     ...base,
@@ -267,6 +289,19 @@ export const curriculumRepairTasks: CurriculumRepairTask[] = curriculumSeed.issu
   }
 })
 
+export const curriculumCoverageTasks: CurriculumCoverageTask[] = curriculumGradeVerificationRows
+  .filter((row) => row.coverageStatus === 'gap')
+  .map((row) => ({
+    id: `coverage:${row.subject}:${row.grade}`,
+    subject: row.subject,
+    grade: row.grade,
+    wave: row.wave,
+    status: 'queued',
+    title: `补齐${row.grade}年级${row.subject === 'math' ? '数学' : row.subject}可核数据`,
+    action: '获取并核验该年级自身教材章节中的 KnowledgeNode/Occurrence；禁止使用“在更高年级被复用”替代该年级覆盖。补齐后重新运行逐条台账与 CI。',
+    blocking: true,
+  }))
+
 export const curriculumVerificationSummary = {
   rowCount: curriculumGradeVerificationRows.length,
   itemCount: curriculumKnowledgeVerificationItems.length,
@@ -276,17 +311,20 @@ export const curriculumVerificationSummary = {
   wave1ExecutedRows: curriculumGradeVerificationRows.filter((row) => row.wave === 1 && wave1Executed.has(`${row.subject}:${row.grade}`)).length,
   wave1ScreenedItems: curriculumKnowledgeVerificationItems.filter((item) => item.status === 'automated_screened' || item.status === 'needs_patch').length,
   rowsWithFindings: curriculumGradeVerificationRows.filter((row) => row.automatedStatus === 'passed_with_findings').length,
-  repairTaskCount: curriculumRepairTasks.length,
+  coverageGapCount: curriculumCoverageTasks.length,
+  repairTaskCount: curriculumRepairTasks.length + curriculumCoverageTasks.length,
   patchProposedCount: curriculumRepairTasks.filter((task) => task.status === 'patch_proposed').length,
   humanVerifiedRows: curriculumGradeVerificationRows.filter((row) => row.humanStatus === 'verified').length,
   humanVerifiedItems: curriculumKnowledgeVerificationItems.filter((item) => item.humanStatus === 'verified').length,
-  gradeVerificationReadyForOfficialRelease: curriculumGradeVerificationRows.every((row) => row.humanStatus === 'verified')
+  gradeVerificationReadyForOfficialRelease: curriculumCoverageTasks.length === 0
+    && curriculumGradeVerificationRows.every((row) => row.humanStatus === 'verified')
     && curriculumKnowledgeVerificationItems.every((item) => item.humanStatus === 'verified')
     && curriculumRepairTasks.every((task) => task.status === 'verified'),
 }
 
 export const curriculumVerificationPolicy = {
   requiredChecks: [
+    '覆盖完整性',
     '来源/Pointer完整性',
     '学科与年级归属',
     '知识名称与学习要求一致性',
@@ -297,7 +335,7 @@ export const curriculumVerificationPolicy = {
     '许可证/权利状态',
     '真人学科复核',
   ],
-  rule: '机器检查、修补建议与真人教研复核分层记录。任何年级或知识点未完成真人复核前，不得标记为正式已核。',
+  rule: '机器检查、覆盖补齐、修补建议与真人教研复核分层记录。任何年级覆盖缺口、知识点未完成真人复核或修补未复测时，不得标记为正式已核。',
 }
 
 export function verificationRowsForSubject(subject: CurriculumSubject) {
