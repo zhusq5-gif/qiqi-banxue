@@ -4,9 +4,7 @@ on:
   pull_request:
     paths:
       - 'src/pages/KnowledgeMap.tsx'
-      - 'src/pages/CurriculumReview.tsx'
-      - 'src/pages/CurriculumVerification.tsx'
-      - 'src/pages/CurriculumStandards.tsx'
+      - 'src/pages/Curriculum*.tsx'
       - 'src/pages/StandardMappingReview.tsx'
       - 'src/pages/MathResearchSample.tsx'
       - 'src/pages/MathFineGraphSample.tsx'
@@ -14,9 +12,14 @@ on:
       - 'src/components/curriculum/**'
       - 'src/content/curriculum/**'
       - 'config/curriculum-reviewers.json'
+      - 'config/curriculum-content-reviewers.json'
       - 'approvals/curriculum-standard-approvals.json'
+      - 'approvals/curriculum-content-candidates.json'
+      - 'approvals/curriculum-content-approvals.json'
       - 'scripts/curriculum-standard-gate.mjs'
       - 'scripts/sign-curriculum-standard-review.mjs'
+      - 'scripts/curriculum-content-gate.mjs'
+      - 'scripts/sign-curriculum-content-review.mjs'
       - 'src/App.tsx'
       - 'openspec/changes/curriculum-knowledge-map/**'
       - '.github/workflows/curriculum-knowledge-ci.yml'
@@ -25,9 +28,7 @@ on:
       - feat/curriculum-knowledge-v03
     paths:
       - 'src/pages/KnowledgeMap.tsx'
-      - 'src/pages/CurriculumReview.tsx'
-      - 'src/pages/CurriculumVerification.tsx'
-      - 'src/pages/CurriculumStandards.tsx'
+      - 'src/pages/Curriculum*.tsx'
       - 'src/pages/StandardMappingReview.tsx'
       - 'src/pages/MathResearchSample.tsx'
       - 'src/pages/MathFineGraphSample.tsx'
@@ -35,9 +36,14 @@ on:
       - 'src/components/curriculum/**'
       - 'src/content/curriculum/**'
       - 'config/curriculum-reviewers.json'
+      - 'config/curriculum-content-reviewers.json'
       - 'approvals/curriculum-standard-approvals.json'
+      - 'approvals/curriculum-content-candidates.json'
+      - 'approvals/curriculum-content-approvals.json'
       - 'scripts/curriculum-standard-gate.mjs'
       - 'scripts/sign-curriculum-standard-review.mjs'
+      - 'scripts/curriculum-content-gate.mjs'
+      - 'scripts/sign-curriculum-content-review.mjs'
       - 'src/App.tsx'
       - 'openspec/changes/curriculum-knowledge-map/**'
       - '.github/workflows/curriculum-knowledge-ci.yml'
@@ -55,7 +61,11 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test -- --passWithNoTests
-      - name: Verify Ed25519 gate implementation
+      - name: Verify standards Ed25519 gate implementation
         run: node scripts/curriculum-standard-gate.mjs --self-test
-      - name: Confirm complete mapping set is covered and official export is still blocked
+      - name: Confirm complete standards mapping set is covered and official alignment export is blocked
         run: node scripts/curriculum-standard-gate.mjs --expect-blocked --expect-candidate-count=60
+      - name: Verify independent curriculum content Ed25519 gate implementation
+        run: node scripts/curriculum-content-gate.mjs --self-test
+      - name: Confirm formal content release is blocked until candidates and trusted reviewers are registered
+        run: node scripts/curriculum-content-gate.mjs --expect-blocked --expect-candidate-count=0
