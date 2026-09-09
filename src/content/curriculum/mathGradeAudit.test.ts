@@ -13,7 +13,15 @@ describe('grade-level math evidence audit', () => {
     expect(grade4.unresolvedAssessmentTargetCount).toBe(0)
     expect(grade4.unlinkedAssessmentCount).toBe(1)
     expect(mathWave2AuditTasks.some((task) => task.id === 'math-audit:g4:assessment:math_4a_rjb_exe8')).toBe(false)
-    expect(mathWave2AuditTasks.some((task) => task.id === 'math-audit:g4:assessment:math_4a_rjb_exe20' && task.severity === 'blocking')).toBe(true)
+  })
+
+  it('classifies the remaining exe20 gap as a source-unlinked candidate after raw-source audit', () => {
+    const task = mathWave2AuditTasks.find((item) => item.id === 'math-audit:g4:assessment:math_4a_rjb_exe20')
+    expect(task?.kind).toBe('source_unlinked_assessment_candidate')
+    expect(task?.severity).toBe('blocking')
+    expect(task?.sourceRefs).toContain('math.json L36529-L36533')
+    expect(task?.sourceRefs).toContain('math.json L65769-L66025')
+    expect(task?.autoApply).toBe(false)
   })
 
   it('keeps the known grade-5 to grade-4 statistics relation as relates_to with evidence', () => {
@@ -40,13 +48,14 @@ describe('grade-level math evidence audit', () => {
     expect(mathWave2AuditTasks.some((task) => task.id === `math-audit:g4:reuse:${angleReuse?.occurrenceId}` && task.severity === 'review')).toBe(true)
   })
 
-  it('requires evidence for semantic relations and treats only unresolved data gaps as blocking', () => {
+  it('requires evidence for semantic relations and keeps source gaps separate from review relations', () => {
     for (const audit of mathWave2GradeAudits) {
       expect(audit.relationEvidenceMissingCount).toBe(0)
       expect(audit.futureOriginOccurrenceCount).toBe(0)
     }
     expect(mathWave2AuditTasks.every((task) => task.autoApply === false)).toBe(true)
     expect(mathWave2AuditTasks.filter((task) => task.kind === 'cross_grade_relation_review').every((task) => task.severity === 'review')).toBe(true)
-    expect(mathWave2AuditTasks.filter((task) => task.kind === 'assessment_without_target')).toHaveLength(1)
+    expect(mathWave2AuditTasks.filter((task) => task.kind === 'source_unlinked_assessment_candidate')).toHaveLength(1)
+    expect(mathWave2AuditTasks.filter((task) => task.kind === 'assessment_without_target')).toHaveLength(0)
   })
 })
