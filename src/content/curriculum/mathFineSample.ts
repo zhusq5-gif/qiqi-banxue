@@ -4,6 +4,7 @@ import rawFineProgression from './math-fine-progression-v03.json'
 import rawFineFractions from './math-fine-fractions-v03.json'
 import rawFineGeometry from './math-fine-geometry-v03.json'
 import rawFineStatistics from './math-fine-statistics-v03.json'
+import rawFineGrade2Coverage from './math-fine-grade2-coverage-v04.json'
 
 export type MathFineNodeLabel = 'Chapter' | 'Concept' | 'Skill' | 'Exercise'
 export type MathFineEdgeType = 'relates_to' | 'prerequisites_for' | 'is_a' | 'appears_in' | 'tests_concept' | 'tests_skill'
@@ -109,11 +110,12 @@ const progression = rawFineProgression as MathFineProgressionExpansion
 const fractionExpansion = rawFineFractions as MathFineRawExpansion
 const geometryExpansion = rawFineGeometry as MathFineRawExpansion
 const statisticsExpansion = rawFineStatistics as MathFineRawExpansion
+const grade2Coverage = rawFineGrade2Coverage as MathFineRawExpansion
 
 export const mathFineSample: MathFineSample = {
   ...base,
-  datasetVersion: `${base.datasetVersion}+${expansion.datasetVersion}+${progression.datasetVersion}`,
-  scope: `${base.scope}；${expansion.scopeNote}；${progression.scopeNote}`,
+  datasetVersion: `${base.datasetVersion}+${expansion.datasetVersion}+${progression.datasetVersion}+${grade2Coverage.datasetVersion}`,
+  scope: `${base.scope}；${expansion.scopeNote}；${progression.scopeNote}；补充二年级上册“长度单位”本年级 Occurrence 样板`,
   themes: progression.themes,
   progressions: progression.progressions,
   nodes: [
@@ -122,6 +124,7 @@ export const mathFineSample: MathFineSample = {
     ...fractionExpansion.nodes,
     ...geometryExpansion.nodes,
     ...statisticsExpansion.nodes,
+    ...grade2Coverage.nodes,
   ],
   edges: [
     ...base.edges,
@@ -129,6 +132,7 @@ export const mathFineSample: MathFineSample = {
     ...fractionExpansion.edges,
     ...geometryExpansion.edges,
     ...statisticsExpansion.edges,
+    ...grade2Coverage.edges,
   ],
 }
 
