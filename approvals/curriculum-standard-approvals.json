@@ -1,0 +1,5 @@
+{
+  "schema": "qiqi-standard-mapping-approvals/v1",
+  "approvals": [],
+  "note": "当前没有受信签名审批。正式 alignment 导出必须通过 scripts/curriculum-standard-gate.mjs 验证。"
+}

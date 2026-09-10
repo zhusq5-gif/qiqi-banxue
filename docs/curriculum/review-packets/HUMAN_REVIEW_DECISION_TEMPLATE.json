@@ -1,0 +1,18 @@
+{
+  "schema": "qiqi-curriculum-human-review-decision/v1",
+  "caseId": "human-review:CASE_ID",
+  "status": "unsigned_human_review",
+  "decision": "SELECT_FROM_CASE_ALLOWED_DECISIONS",
+  "rationale": "填写教学/教材/来源依据，不要只写‘同意’。",
+  "reviewer": {
+    "name": "审核人姓名",
+    "role": "小学语文/英语/数学教师或教研角色"
+  },
+  "evidenceRefs": [
+    "填写实际查看过的 source URL / JSON Pointer / raw sourceLocator"
+  ],
+  "reviewedAt": "2026-09-09T00:00:00+08:00",
+  "humanVerified": false,
+  "autoApply": false,
+  "nextGate": "review_decision_ingestion"
+}

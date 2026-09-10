@@ -1,0 +1,29 @@
+{
+  "schema": "qiqi-curriculum-human-review-decision/v2",
+  "caseId": "human-review:CASE_ID",
+  "caseState": {
+    "sourceTaskId": "COPY_FROM_CURRENT_CASE",
+    "title": "COPY_FROM_CURRENT_CASE",
+    "reviewType": "COPY_FROM_CURRENT_CASE",
+    "sourceRefs": [
+      "COPY_CURRENT_CASE_SOURCE_REFS_IN_ORDER"
+    ],
+    "allowedDecisions": [
+      "COPY_CURRENT_CASE_ALLOWED_DECISIONS_IN_ORDER"
+    ]
+  },
+  "status": "unsigned_human_review",
+  "decision": "SELECT_FROM_CURRENT_CASE_ALLOWED_DECISIONS",
+  "rationale": "填写教学、教材或来源依据，不要只写同意。",
+  "reviewer": {
+    "name": "审核人姓名",
+    "role": "对应学科教师或教研角色"
+  },
+  "evidenceRefs": [
+    "至少一条必须与当前 case sourceRefs 完全一致"
+  ],
+  "reviewedAt": "2026-09-09T11:30:00+08:00",
+  "humanVerified": false,
+  "autoApply": false,
+  "nextGate": "review_decision_ingestion"
+}

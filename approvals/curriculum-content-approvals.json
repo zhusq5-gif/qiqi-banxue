@@ -1,0 +1,5 @@
+{
+  "schema": "qiqi-curriculum-content-approval-store/v1",
+  "approvals": [],
+  "note": "Signed content approval records only. The repository stores public verification material and signatures, never reviewer private keys."
+}

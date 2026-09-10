@@ -1,0 +1,5 @@
+{
+  "schema": "qiqi-curriculum-content-reviewer-registry/v1",
+  "reviewers": {},
+  "note": "Trusted content-reviewer Ed25519 public keys are registered only after offline identity/role verification. Private keys must never be committed to this repository."
+}

@@ -1,0 +1,39 @@
+{
+  "datasetVersion": "k12-kgraph-math-grade2-coverage-v0.4",
+  "status": "research_only",
+  "subject": "math",
+  "nodes": [
+    {"id":"math_2a_rjb_ch1","label":"Chapter","name":"长度单位","properties":{},"sourceLocator":"math.json L25080-L25083"},
+    {"id":"math_2a_rjb_cpt1","label":"Concept","name":"长度单位","properties":{"definition":"用于测量长度的标准单位体系，包括米、千米、厘米、毫米、英寸等。","importance":"重要","pages":"教材第1章"},"sourceLocator":"math.json L2549-L2561"},
+    {"id":"math_2a_rjb_cpt2","label":"Concept","name":"厘米","properties":{"definition":"常用的较小的长度单位，通常用于测量较短的物体，符号为cm。","importance":"重要","pages":"教材第1章","unit":"cm"},"sourceLocator":"math.json L2564-L2573"},
+    {"id":"math_2a_rjb_cpt3","label":"Concept","name":"米","properties":{"definition":"较大的长度单位，常用于测量较长的物体，符号为m。1米=100厘米。","importance":"重要","pages":"教材第1章","unit":"m"},"sourceLocator":"math.json L2575-L2584"},
+    {"id":"math_2a_rjb_cpt4","label":"Concept","name":"线段","properties":{"definition":"由两个端点确定、具有固定长度的线，是直线的一部分。","importance":"掌握","pages":"线段部分"},"sourceLocator":"math.json L2586-L2594"},
+    {"id":"math_2a_rjb_skl1","label":"Skill","name":"使用尺子测量长度","properties":{"description":"将尺子的0刻度对准物体的一端，读取另一端所对应的刻度，得到物体的长度。"},"sourceLocator":"math.json L2596-L2602"},
+    {"id":"math_2a_rjb_skl2","label":"Skill","name":"估测长度","properties":{"description":"根据生活经验或参照物，对物体的长度进行大致判断。"},"sourceLocator":"math.json L2604-L2610"},
+    {"id":"math_2a_rjb_exe1","label":"Exercise","name":"看一看，铅笔长（ ）厘米。","properties":{"stem":"看一看，铅笔长（ ）厘米。","answer":"大约10厘米（因教材图示不同，应按尺子刻度读取实际数值）。","difficulty":1,"type":"填空题"},"sourceLocator":"math.json L2612-L2622"},
+    {"id":"math_2a_rjb_exe2","label":"Exercise","name":"一根旗杆的高度是13厘米还是13米？","properties":{"stem":"一根旗杆的高度是13厘米还是13米？","answer":"13米。","difficulty":2,"type":"判断题"},"sourceLocator":"math.json L2624-L2634"}
+  ],
+  "edges": [
+    {"id":"fine-v4-e01","source":"math_2a_rjb_cpt2","target":"math_2a_rjb_cpt1","type":"is_a","evidence":"厘米属于长度单位。","sourceLocator":"math.json L30113-L30121"},
+    {"id":"fine-v4-e02","source":"math_2a_rjb_cpt3","target":"math_2a_rjb_cpt1","type":"is_a","evidence":"米属于长度单位。","sourceLocator":"math.json L30124-L30132"},
+    {"id":"fine-v4-e03","source":"math_2a_rjb_cpt2","target":"math_2a_rjb_cpt3","type":"prerequisites_for","evidence":"1米=100厘米；原图谱将理解厘米作为理解米的基础。","sourceLocator":"math.json L30135-L30142"},
+    {"id":"fine-v4-e04","source":"math_2a_rjb_cpt2","target":"math_2a_rjb_cpt3","type":"relates_to","evidence":"厘米与米存在换算关系：1米=100厘米。","sourceLocator":"math.json L30145-L30153"},
+    {"id":"fine-v4-e05","source":"math_2a_rjb_cpt2","target":"math_2a_rjb_skl1","type":"prerequisites_for","evidence":"用厘米测量纸条长度时，需要理解厘米刻度。","sourceLocator":"math.json L30156-L30163"},
+    {"id":"fine-v4-e06","source":"math_2a_rjb_cpt4","target":"math_2a_rjb_skl1","type":"prerequisites_for","evidence":"线段可以量出长度。","sourceLocator":"math.json L30166-L30173"},
+
+    {"id":"fine-v4-e07","source":"math_2a_rjb_cpt1","target":"math_2a_rjb_ch1","type":"appears_in","evidence":"原始图谱定位到二年级上册“长度单位”。","sourceLocator":"math.json L30766-L30770"},
+    {"id":"fine-v4-e08","source":"math_2a_rjb_cpt2","target":"math_2a_rjb_ch1","type":"appears_in","evidence":"原始图谱定位到二年级上册“长度单位”。","sourceLocator":"math.json L30773-L30777"},
+    {"id":"fine-v4-e09","source":"math_2a_rjb_cpt3","target":"math_2a_rjb_ch1","type":"appears_in","evidence":"原始图谱定位到二年级上册“长度单位”。","sourceLocator":"math.json L30780-L30784"},
+    {"id":"fine-v4-e10","source":"math_2a_rjb_cpt4","target":"math_2a_rjb_ch1","type":"appears_in","evidence":"原始图谱定位到二年级上册“长度单位”。","sourceLocator":"math.json L30787-L30791"},
+    {"id":"fine-v4-e11","source":"math_2a_rjb_skl1","target":"math_2a_rjb_ch1","type":"appears_in","evidence":"原始图谱定位到二年级上册“长度单位”。","sourceLocator":"math.json L30794-L30798"},
+    {"id":"fine-v4-e12","source":"math_2a_rjb_skl2","target":"math_2a_rjb_ch1","type":"appears_in","evidence":"原始图谱定位到二年级上册“长度单位”。","sourceLocator":"math.json L30801-L30805"},
+    {"id":"fine-v4-e13","source":"math_2a_rjb_exe1","target":"math_2a_rjb_ch1","type":"appears_in","evidence":"原始练习定位到二年级上册“长度单位”。","sourceLocator":"math.json L30808-L30812"},
+    {"id":"fine-v4-e14","source":"math_2a_rjb_exe2","target":"math_2a_rjb_ch1","type":"appears_in","evidence":"原始练习定位到二年级上册“长度单位”。","sourceLocator":"math.json L30815-L30819"},
+
+    {"id":"fine-v4-e15","source":"math_2a_rjb_exe1","target":"math_2a_rjb_skl1","type":"tests_skill","evidence":"铅笔测量题直接测试使用尺子测量长度。","sourceLocator":"math.json L64279-L64287"},
+    {"id":"fine-v4-e16","source":"math_2a_rjb_exe1","target":"math_2a_rjb_cpt2","type":"tests_concept","evidence":"铅笔测量题直接测试厘米概念。","sourceLocator":"math.json L64290-L64298"},
+    {"id":"fine-v4-e17","source":"math_2a_rjb_exe2","target":"math_2a_rjb_cpt2","type":"tests_concept","evidence":"旗杆单位选择题同时测试厘米与米的量感。","sourceLocator":"math.json L64301-L64313"},
+    {"id":"fine-v4-e18","source":"math_2a_rjb_exe2","target":"math_2a_rjb_cpt3","type":"tests_concept","evidence":"旗杆单位选择题同时测试厘米与米的量感。","sourceLocator":"math.json L64301-L64313"},
+    {"id":"fine-v4-e19","source":"math_2a_rjb_exe2","target":"math_2a_rjb_skl2","type":"tests_skill","evidence":"旗杆单位选择题直接测试估测长度技能。","sourceLocator":"math.json L64316-L64324"}
+  ]
+}
