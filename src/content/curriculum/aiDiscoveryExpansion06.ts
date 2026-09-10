@@ -1,0 +1,130 @@
+import type { AIDiscoveryCandidate } from './aiDiscovery'
+
+const PEP_CHINESE_WHOLE_BOOK_RESEARCH = 'https://www.pep.com.cn/bks/xxyw/jzjd/202603/W020260304533912104057.pdf'
+const PEP_EN_G5S = 'https://www.pep.com.cn/zslth/yyptypzj/xypep/5s/'
+const PEP_EN_G6S = 'https://www.pep.com.cn/zslth/yyptypzj/xypep/6s/'
+const PEP_EN_G6X = 'https://www.pep.com.cn/zslth/yyptypzj/xypep/6x/'
+
+function candidate(input: Omit<AIDiscoveryCandidate, 'aiGenerated' | 'reviewStatus' | 'autoApply' | 'nextGate'>): AIDiscoveryCandidate {
+  return {
+    ...input,
+    aiGenerated: true,
+    reviewStatus: 'ai_candidate',
+    autoApply: false,
+    nextGate: 'human_ui_review',
+  }
+}
+
+export const aiDiscoveryExpansion06Batch = {
+  schema: 'qiqi-curriculum-ai-discovery-batch/v1' as const,
+  batchId: 'ai-discovery-2026-09-10-wave06-whole-book-upper-english',
+  generatedAt: '2026-09-10T11:42:00+08:00',
+  note: 'Wave06 补整本书阅读与高年级英语领域深度。语文来源为人教社网站发布的2026教研文章，明确降级为 publisher_teaching_research，不把研究设计冒充教材正文；英语来源为人教社当前五、六年级数字资源栏目结构。',
+}
+
+export const aiDiscoveryExpansion06: AIDiscoveryCandidate[] = [
+  candidate({
+    id: 'ai6-chinese-g5-folk-story-whole-book-adaptation',
+    subject: 'chinese',
+    grades: [5],
+    candidateKind: 'knowledge_node',
+    label: '民间故事整本书阅读与改编表达（五年级候选）',
+    learningDemand: '在整本书阅读中梳理民间故事的主要人物、情节和文化内涵，并尝试通过广播剧等形式进行改编表达。',
+    evidenceSummary: '人教社网站2026年教研文章依据“快乐读书吧”序列，将五年级上册民间故事阅读设计为改编并录制广播剧等项目化成果。',
+    sourceRefs: [PEP_CHINESE_WHOLE_BOOK_RESEARCH],
+    sourceAuthority: 'publisher_teaching_research',
+    sourceNote: '这是出版社网站发布的教学研究方案，不是教材正文。可支持整本书阅读/改编表达候选发现，但具体教材要求、书目版本和评价标准必须回到教材与课标核对。',
+    confidence: 'medium',
+  }),
+  candidate({
+    id: 'ai6-chinese-g5-classic-character-deep-reading',
+    subject: 'chinese',
+    grades: [5],
+    candidateKind: 'knowledge_node',
+    label: '古典名著人物形象深读与多角度解读（五年级候选）',
+    learningDemand: '在古典名著整本书阅读中梳理人物经历、性格发展和关键事件，并尝试从不同角度解释人物形象和作品文化内涵。',
+    evidenceSummary: '人教社2026教研文章以五年级下册古典名著阅读为例，提出人物成长档案、人物形象深读和专题访谈等深度阅读活动。',
+    sourceRefs: [PEP_CHINESE_WHOLE_BOOK_RESEARCH],
+    sourceAuthority: 'publisher_teaching_research',
+    sourceNote: '研究方案能支持“人物深读/多角度解读”候选，但不能据此宣称这些项目活动就是教材强制要求。',
+    confidence: 'medium',
+  }),
+  candidate({
+    id: 'ai6-chinese-g6-growth-story-trajectory',
+    subject: 'chinese',
+    grades: [6],
+    candidateKind: 'knowledge_node',
+    label: '成长类整本书人物成长轨迹梳理（六年级候选）',
+    learningDemand: '在成长主题整本书阅读中按重要事件梳理主人公的经历与变化，形成对人物成长轨迹的整体理解。',
+    evidenceSummary: '人教社2026教研文章的六年级上册整本书项目示例要求围绕主人公成长经历制作纪念册并梳理成长轨迹。',
+    sourceRefs: [PEP_CHINESE_WHOLE_BOOK_RESEARCH],
+    sourceAuthority: 'publisher_teaching_research',
+    sourceNote: '仅作为整本书阅读能力候选和教学实践证据，不自动绑定具体教材版本或正式评价标准。',
+    confidence: 'medium',
+  }),
+  candidate({
+    id: 'ai6-chinese-g6-world-classic-spatial-presentation',
+    subject: 'chinese',
+    grades: [6],
+    candidateKind: 'knowledge_node',
+    label: '世界名著地点信息梳理与导览表达（六年级候选）',
+    learningDemand: '在世界名著整本书阅读中提取地点、事件和人物活动信息，并将理解转化为导览图或口头推介等综合表达。',
+    evidenceSummary: '人教社2026教研文章的六年级下册整本书项目示例以名著经典地点导览图和推介为成果形态。',
+    sourceRefs: [PEP_CHINESE_WHOLE_BOOK_RESEARCH],
+    sourceAuthority: 'publisher_teaching_research',
+    sourceNote: '项目化教研方案证据；“导览图”只是可选教学成果形式，不能直接上升为正式教材知识点。',
+    confidence: 'medium',
+  }),
+  candidate({
+    id: 'ai6-english-g6-theme-read-write-current',
+    subject: 'english',
+    grades: [6],
+    candidateKind: 'knowledge_node',
+    label: '六年级主题阅读与书面表达（当前资源候选）',
+    learningDemand: '围绕地点、出行、计划、人物、职业、情绪等主题，通过 Read and write 活动完成主题信息理解与基础书面表达。',
+    evidenceSummary: '人教社当前六年级上册多个单元均设置 Read and write；六年级下册各单元也持续设置 B Read and write。',
+    sourceRefs: [PEP_EN_G6S, PEP_EN_G6X],
+    sourceAuthority: 'publisher_current_resource',
+    sourceNote: '可确认当前资源中 Read and write 栏目持续存在；具体文本体裁、字数、句型和评价标准必须打开对应内容逐项核对。',
+    confidence: 'medium',
+  }),
+  candidate({
+    id: 'ai6-english-g6-pronunciation-patterns',
+    subject: 'english',
+    grades: [6],
+    candidateKind: 'knowledge_node',
+    label: '六年级语音规律归纳与发音提示（当前资源候选）',
+    learningDemand: '通过单元 pronunciation tips 与学期末语音规律资源，进一步归纳字母及字母组合与发音之间的对应关系。',
+    evidenceSummary: '人教社当前六年级上册各单元设置 Tips for pronunciation；六年级下册附录列出辅音字母、辅音字母组合、元音字母及元音字母组合的 pronunciation patterns。',
+    sourceRefs: [PEP_EN_G6S, PEP_EN_G6X],
+    sourceAuthority: 'publisher_current_resource',
+    sourceNote: '栏目结构可核；具体音标、规则例词和例外词需要进入资源正文再做条目级抽取。',
+    confidence: 'medium',
+  }),
+  candidate({
+    id: 'ai6-english-g5-proverbs-culture',
+    subject: 'english',
+    grades: [5],
+    candidateKind: 'knowledge_node',
+    label: '单元谚语理解与文化表达（五年级候选）',
+    learningDemand: '结合单元主题理解简短英语谚语或格言的基本含义，并在教师引导下比较其表达方式和文化语境。',
+    evidenceSummary: '人教社当前五年级上册在各单元资源中设置 Proverbs 栏目。',
+    sourceRefs: [PEP_EN_G5S],
+    sourceAuthority: 'publisher_current_resource',
+    sourceNote: '只能确认 Proverbs 栏目存在；具体谚语内容、文化解释和教学要求需逐条查看资源，不能由栏目名自动生成文化知识。',
+    confidence: 'low',
+  }),
+  candidate({
+    id: 'ai6-english-g6-proverbs-culture',
+    subject: 'english',
+    grades: [6],
+    candidateKind: 'knowledge_node',
+    label: '单元谚语理解与文化表达（六年级候选）',
+    learningDemand: '结合六年级主题语境理解简短英语谚语的基本含义，关注语言表达与文化经验之间的联系。',
+    evidenceSummary: '人教社当前六年级上、下册单元资源持续设置 Proverbs 栏目。',
+    sourceRefs: [PEP_EN_G6S, PEP_EN_G6X],
+    sourceAuthority: 'publisher_current_resource',
+    sourceNote: '栏目级候选，不能据此推断具体文化知识清单；真实审核必须打开对应单元 Proverbs 内容。',
+    confidence: 'low',
+  }),
+]
