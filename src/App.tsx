@@ -2,10 +2,11 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
-import Today from './pages/Today'
-import Parent from './pages/Parent'
 import { getProfile, getSessionUser, type Profile } from './lib/cloudbase'
 
+// Preserve main-app page-level splitting while keeping curriculum routes isolated behind their own lazy chunks.
+const Today = lazy(() => import('./pages/Today'))
+const Parent = lazy(() => import('./pages/Parent'))
 const KnowledgeMap = lazy(() => import('./pages/KnowledgeMap'))
 const CurriculumReview = lazy(() => import('./pages/CurriculumReview'))
 const CurriculumVerification = lazy(() => import('./pages/CurriculumVerificationWave2'))
@@ -71,32 +72,30 @@ export default function App() {
   if (state === 'onboarding') return <Onboarding onDone={bootstrap} />
 
   return (
-    <Suspense fallback={<RouteFallback />}>
-      <Routes>
-        <Route path="/today" element={<Today profile={profile!} />} />
-        <Route
-          path="/parent"
-          element={<Parent profile={profile!} onProfileChange={setProfile} onLogout={bootstrap} />}
-        />
-        <Route path="/knowledge-map" element={<KnowledgeMap />} />
-        <Route path="/knowledge-map/review" element={<CurriculumReview />} />
-        <Route path="/knowledge-map/verification" element={<CurriculumVerification />} />
-        <Route path="/knowledge-map/review-center" element={<CurriculumReviewCenter />} />
-        <Route path="/knowledge-map/human-review" element={<CurriculumHumanReview />} />
-        <Route path="/knowledge-map/human-review/current" element={<CurriculumHumanReviewCurrent />} />
-        <Route path="/knowledge-map/human-review/ingest" element={<CurriculumHumanReviewIngestion />} />
-        <Route path="/knowledge-map/human-review/proposal" element={<CurriculumHumanReviewProposal />} />
-        <Route path="/knowledge-map/human-review/ai" element={<CurriculumAIHumanReviewQueue />} />
-        <Route path="/knowledge-map/content-approval" element={<CurriculumContentApproval />} />
-        <Route path="/knowledge-map/discovery" element={<CurriculumAIDiscovery />} />
-        <Route path="/knowledge-map/discovery/domains" element={<CurriculumAIDomainCoverage />} />
-        <Route path="/knowledge-map/standards" element={<CurriculumStandards />} />
-        <Route path="/knowledge-map/standards/review" element={<StandardMappingReview />} />
-        <Route path="/knowledge-map/math-sample" element={<MathResearchSample />} />
-        <Route path="/knowledge-map/math-sample/fine" element={<MathFineGraphSample />} />
-        <Route path="/knowledge-map/math-sample/normalized" element={<MathNormalizedSample />} />
-        <Route path="*" element={<Navigate to="/today" replace />} />
-      </Routes>
-    </Suspense>
+    <Routes>
+      <Route path="/today" element={<Suspense fallback={<Splash />}><Today profile={profile!} /></Suspense>} />
+      <Route
+        path="/parent"
+        element={<Suspense fallback={<Splash />}><Parent profile={profile!} onProfileChange={setProfile} onLogout={bootstrap} /></Suspense>}
+      />
+      <Route path="/knowledge-map" element={<Suspense fallback={<RouteFallback />}><KnowledgeMap /></Suspense>} />
+      <Route path="/knowledge-map/review" element={<Suspense fallback={<RouteFallback />}><CurriculumReview /></Suspense>} />
+      <Route path="/knowledge-map/verification" element={<Suspense fallback={<RouteFallback />}><CurriculumVerification /></Suspense>} />
+      <Route path="/knowledge-map/review-center" element={<Suspense fallback={<RouteFallback />}><CurriculumReviewCenter /></Suspense>} />
+      <Route path="/knowledge-map/human-review" element={<Suspense fallback={<RouteFallback />}><CurriculumHumanReview /></Suspense>} />
+      <Route path="/knowledge-map/human-review/current" element={<Suspense fallback={<RouteFallback />}><CurriculumHumanReviewCurrent /></Suspense>} />
+      <Route path="/knowledge-map/human-review/ingest" element={<Suspense fallback={<RouteFallback />}><CurriculumHumanReviewIngestion /></Suspense>} />
+      <Route path="/knowledge-map/human-review/proposal" element={<Suspense fallback={<RouteFallback />}><CurriculumHumanReviewProposal /></Suspense>} />
+      <Route path="/knowledge-map/human-review/ai" element={<Suspense fallback={<RouteFallback />}><CurriculumAIHumanReviewQueue /></Suspense>} />
+      <Route path="/knowledge-map/content-approval" element={<Suspense fallback={<RouteFallback />}><CurriculumContentApproval /></Suspense>} />
+      <Route path="/knowledge-map/discovery" element={<Suspense fallback={<RouteFallback />}><CurriculumAIDiscovery /></Suspense>} />
+      <Route path="/knowledge-map/discovery/domains" element={<Suspense fallback={<RouteFallback />}><CurriculumAIDomainCoverage /></Suspense>} />
+      <Route path="/knowledge-map/standards" element={<Suspense fallback={<RouteFallback />}><CurriculumStandards /></Suspense>} />
+      <Route path="/knowledge-map/standards/review" element={<Suspense fallback={<RouteFallback />}><StandardMappingReview /></Suspense>} />
+      <Route path="/knowledge-map/math-sample" element={<Suspense fallback={<RouteFallback />}><MathResearchSample /></Suspense>} />
+      <Route path="/knowledge-map/math-sample/fine" element={<Suspense fallback={<RouteFallback />}><MathFineGraphSample /></Suspense>} />
+      <Route path="/knowledge-map/math-sample/normalized" element={<Suspense fallback={<RouteFallback />}><MathNormalizedSample /></Suspense>} />
+      <Route path="*" element={<Navigate to="/today" replace />} />
+    </Routes>
   )
 }
