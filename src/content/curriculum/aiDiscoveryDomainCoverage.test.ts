@@ -40,7 +40,7 @@ describe('AI discovery subject-grade-domain planning', () => {
     expect(aiDiscoveryDomainCoverageCells.some((cell) => cell.subject === 'math' && cell.status === 'search_required')).toBe(true)
   })
 
-  it('uses wave04 to seed English culture/phonics depth while retaining other English search gaps', () => {
+  it('uses wave04+06 to seed English culture/phonics depth while preserving shallow culture cells for further review', () => {
     const phonics = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai4-english-g4-phonics-spelling')!
     const culture = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai4-english-culture-cross-cultural')!
     expect(aiDiscoveryDomainIdsForCandidate(phonics)).toEqual(expect.arrayContaining(['en-phonics', 'en-language-knowledge']))
@@ -48,7 +48,7 @@ describe('AI discovery subject-grade-domain planning', () => {
     const cultureCells = aiDiscoveryDomainCoverageCells.filter((cell) => cell.domainId === 'en-culture')
     expect(cultureCells).toHaveLength(4)
     expect(cultureCells.every((cell) => cell.candidateCount >= 1)).toBe(true)
-    expect(aiDiscoveryDomainCoverageCells.some((cell) => cell.subject === 'english' && cell.status === 'search_required')).toBe(true)
+    expect(cultureCells.some((cell) => cell.status === 'shallow_candidates')).toBe(true)
   })
 
   it('uses wave05 concrete abilities to deepen Chinese reading/expression/inquiry and English phonics/read-write/listening', () => {
