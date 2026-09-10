@@ -64,4 +64,17 @@ describe('AI discovery subject-grade-domain planning', () => {
     expect(aiDiscoveryDomainIdsForCandidate(g5Phonics)).toEqual(expect.arrayContaining(['en-phonics', 'en-language-knowledge']))
     expect(aiDiscoveryDomainIdsForCandidate(g6Retell)).toEqual(expect.arrayContaining(['en-communication', 'en-listening-speaking']))
   })
+
+  it('uses wave06 to deepen whole-book reading and upper-grade English culture/phonics without reclassifying them as complete', () => {
+    const g5Classic = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai6-chinese-g5-classic-character-deep-reading')!
+    const g6WorldClassic = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai6-chinese-g6-world-classic-spatial-presentation')!
+    const g6Pronunciation = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai6-english-g6-pronunciation-patterns')!
+    const g5Proverbs = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai6-english-g5-proverbs-culture')!
+
+    expect(aiDiscoveryDomainIdsForCandidate(g5Classic)).toEqual(expect.arrayContaining(['cn-reading-appreciation', 'cn-task-critical-reading', 'cn-task-whole-book']))
+    expect(aiDiscoveryDomainIdsForCandidate(g6WorldClassic)).toEqual(expect.arrayContaining(['cn-reading-appreciation', 'cn-expression-communication', 'cn-task-whole-book']))
+    expect(aiDiscoveryDomainIdsForCandidate(g6Pronunciation)).toEqual(expect.arrayContaining(['en-phonics', 'en-language-knowledge']))
+    expect(aiDiscoveryDomainIdsForCandidate(g5Proverbs)).toContain('en-culture')
+    expect(aiDiscoveryDomainCoverageSummary.reviewPoolReadyCount).toBeLessThan(aiDiscoveryDomainCoverageSummary.cellCount)
+  })
 })
