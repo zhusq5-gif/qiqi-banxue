@@ -73,6 +73,14 @@ const explicitDomainByCandidateId: Record<string, string[]> = {
   'ai5-english-g5-phonics-spelling': ['en-phonics', 'en-language-knowledge'],
   'ai5-english-g5-read-write': ['en-reading', 'en-writing'],
   'ai5-english-g6-listen-retell': ['en-communication', 'en-listening-speaking'],
+  'ai6-chinese-g5-folk-story-whole-book-adaptation': ['cn-reading-appreciation', 'cn-expression-communication', 'cn-task-literary-reading', 'cn-task-whole-book'],
+  'ai6-chinese-g5-classic-character-deep-reading': ['cn-reading-appreciation', 'cn-organization-inquiry', 'cn-task-literary-reading', 'cn-task-critical-reading', 'cn-task-whole-book'],
+  'ai6-chinese-g6-growth-story-trajectory': ['cn-reading-appreciation', 'cn-organization-inquiry', 'cn-task-whole-book'],
+  'ai6-chinese-g6-world-classic-spatial-presentation': ['cn-reading-appreciation', 'cn-expression-communication', 'cn-task-whole-book'],
+  'ai6-english-g6-theme-read-write-current': ['en-reading', 'en-writing'],
+  'ai6-english-g6-pronunciation-patterns': ['en-phonics', 'en-language-knowledge'],
+  'ai6-english-g5-proverbs-culture': ['en-culture'],
+  'ai6-english-g6-proverbs-culture': ['en-culture'],
 }
 
 function includeByText(candidate: AIDiscoveryCandidate, domainIds: Set<string>) {
