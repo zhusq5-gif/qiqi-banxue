@@ -415,10 +415,10 @@ function normalizeLabel(value: string) {
 export function exactExistingMatches(candidate: AIDiscoveryCandidate) {
   const key = normalizeLabel(candidate.label)
   const seedMatches = curriculumSeed.entries.filter((entry) => normalizeLabel(entry.label) === key)
-  const mathMatches = mathNormalizedDataset.knowledgeNodes.filter((node) => normalizeLabel(node.label) === key)
+  const mathMatches = mathNormalizedDataset.knowledgeNodes.filter((node) => normalizeLabel(node.canonicalName) === key)
   return [
     ...seedMatches.map((entry) => ({ id: entry.id, subject: entry.subject, grade: entry.grade, label: entry.label, source: 'curriculum_seed' as const })),
-    ...mathMatches.map((node) => ({ id: node.id, subject: 'math' as const, grade: null, label: node.label, source: 'math_normalized' as const })),
+    ...mathMatches.map((node) => ({ id: node.id, subject: 'math' as const, grade: null, label: node.canonicalName, source: 'math_normalized' as const })),
   ]
 }
 
