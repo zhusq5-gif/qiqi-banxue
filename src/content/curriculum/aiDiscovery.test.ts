@@ -44,13 +44,14 @@ describe('AI discovery candidate governance', () => {
   })
 
   it('exports only unsigned human UI decisions and requires current candidate evidence', () => {
-    const candidate = aiDiscoveryCandidates.find((item) => item.id === 'ai-english-g3-origin-country')!
+    const candidate = aiDiscoveryCandidates.find((item) => item.id === 'ai-english-g3-greeting-function')!
+    expect(candidate).toBeDefined()
     const result = createAIDiscoveryDecision(
       candidate.id,
       'promote_to_human_review',
       '审核人',
       '小学英语教研',
-      '已查看人教社当前三年级下册公开对话，候选值得进入下一轮真人精细审校。',
+      '已查看人教社当前三年级公开资源，候选值得进入下一轮真人精细审校。',
       [candidate.sourceRefs[0]],
       '2026-09-09T13:45:00+08:00',
     )
