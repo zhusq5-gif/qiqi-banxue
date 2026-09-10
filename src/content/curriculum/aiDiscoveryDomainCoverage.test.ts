@@ -40,7 +40,7 @@ describe('AI discovery subject-grade-domain planning', () => {
     expect(aiDiscoveryDomainCoverageCells.some((cell) => cell.subject === 'math' && cell.status === 'search_required')).toBe(true)
   })
 
-  it('uses wave04+06 to seed English culture/phonics depth while preserving shallow culture cells for further review', () => {
+  it('uses wave04+06 to seed English culture/phonics depth without treating culture readiness as whole-English completeness', () => {
     const phonics = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai4-english-g4-phonics-spelling')!
     const culture = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai4-english-culture-cross-cultural')!
     expect(aiDiscoveryDomainIdsForCandidate(phonics)).toEqual(expect.arrayContaining(['en-phonics', 'en-language-knowledge']))
@@ -48,7 +48,8 @@ describe('AI discovery subject-grade-domain planning', () => {
     const cultureCells = aiDiscoveryDomainCoverageCells.filter((cell) => cell.domainId === 'en-culture')
     expect(cultureCells).toHaveLength(4)
     expect(cultureCells.every((cell) => cell.candidateCount >= 1)).toBe(true)
-    expect(cultureCells.some((cell) => cell.status === 'shallow_candidates')).toBe(true)
+    expect(cultureCells.every((cell) => cell.status === 'review_pool_ready')).toBe(true)
+    expect(aiDiscoveryDomainCoverageSummary.reviewPoolReadyCount).toBeLessThan(aiDiscoveryDomainCoverageSummary.cellCount)
   })
 
   it('uses wave05 concrete abilities to deepen Chinese reading/expression/inquiry and English phonics/read-write/listening', () => {
@@ -65,7 +66,7 @@ describe('AI discovery subject-grade-domain planning', () => {
     expect(aiDiscoveryDomainIdsForCandidate(g6Retell)).toEqual(expect.arrayContaining(['en-communication', 'en-listening-speaking']))
   })
 
-  it('uses wave06 to deepen whole-book reading and upper-grade English culture/phonics without reclassifying them as complete', () => {
+  it('uses wave06 to deepen whole-book reading and upper-grade English culture/phonics without reclassifying the whole matrix as complete', () => {
     const g5Classic = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai6-chinese-g5-classic-character-deep-reading')!
     const g6WorldClassic = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai6-chinese-g6-world-classic-spatial-presentation')!
     const g6Pronunciation = aiDiscoveryCandidatesAll.find((item) => item.id === 'ai6-english-g6-pronunciation-patterns')!
