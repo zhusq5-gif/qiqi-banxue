@@ -6,6 +6,7 @@ import {
 } from '../content/curriculum/aiDiscoveryPromotion'
 import {
   activateAIDiscoveryHumanReviewCaseDraft,
+  aiHumanReviewDecisionStillCurrent,
   createAIHumanReviewDecisionV2,
   type AIHumanReviewActivationResult,
   type AIHumanReviewDecision,
@@ -25,6 +26,16 @@ import {
   CONTENT_APPROVAL_HANDOFF_STORAGE_KEY,
   createContentApprovalHandoff,
 } from '../content/curriculum/contentApprovalHandoff'
+import {
+  AI_REVIEW_HISTORY_STORAGE_KEY,
+  aiReviewHistoryForCandidate,
+  appendAIReviewHistoryEvent,
+  createAIReviewHistoryEvent,
+  parseAIReviewHistoryStore,
+  serializeAIReviewHistoryStore,
+  type AIReviewHistoryEvent,
+  type AIReviewHistoryEventType,
+} from '../content/curriculum/aiReviewHistory'
 import { subjectLabels, type CurriculumSubject } from '../content/curriculum/curriculum'
 
 function readQueue(): AIDiscoveryHumanReviewCaseDraft[] {
@@ -36,6 +47,10 @@ function readQueue(): AIDiscoveryHumanReviewCaseDraft[] {
   } catch {
     return []
   }
+}
+
+function readHistory() {
+  return parseAIReviewHistoryStore(window.localStorage.getItem(AI_REVIEW_HISTORY_STORAGE_KEY)).events
 }
 
 function downloadJson(filename: string, payload: unknown) {
@@ -62,9 +77,19 @@ const decisionLabels: Record<AIHumanReviewDecision, string> = {
   defer: '暂缓',
 }
 
+const historyLabels: Record<AIReviewHistoryEventType, string> = {
+  case_activated: 'Case 已激活',
+  decision_v2_recorded: 'Decision v2 已记录',
+  regression_passed: '二次回归通过',
+  regression_blocked: '二次回归阻断',
+  content_approval_handoff_prepared: '已准备 Content Approval 交接',
+  deferred: '已暂缓',
+}
+
 export default function CurriculumAIHumanReviewQueue() {
   const navigate = useNavigate()
   const [queue, setQueue] = useState<AIDiscoveryHumanReviewCaseDraft[]>(() => readQueue())
+  const [historyEvents, setHistoryEvents] = useState<AIReviewHistoryEvent[]>(() => readHistory())
   const [subject, setSubject] = useState<'all' | CurriculumSubject>('all')
   const [selectedId, setSelectedId] = useState(queue[0]?.id ?? '')
 
@@ -96,6 +121,8 @@ export default function CurriculumAIHumanReviewQueue() {
   const selectedVisibleIndex = selected ? visible.findIndex((item) => item.id === selected.id) : -1
   const currentCandidate = selected ? aiDiscoveryCandidateAllById(selected.candidateId) : null
   const exactMatches = currentCandidate ? exactExistingMatches(currentCandidate) : []
+  const selectedHistory = selected ? aiReviewHistoryForCandidate(historyEvents, selected.candidateId) : []
+  const decisionStillCurrent = decisionV2 ? aiHumanReviewDecisionStillCurrent(decisionV2) : true
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -113,6 +140,20 @@ export default function CurriculumAIHumanReviewQueue() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [visible, selectedId])
+
+  function appendHistory(eventType: AIReviewHistoryEventType, actorLabel: string, detail: string) {
+    if (!selected) return
+    const event = createAIReviewHistoryEvent({
+      caseId: selected.id,
+      candidateId: selected.candidateId,
+      eventType,
+      actorLabel: actorLabel.trim() || 'local reviewer',
+      detail,
+    })
+    const next = appendAIReviewHistoryEvent(historyEvents, event)
+    setHistoryEvents(next)
+    window.localStorage.setItem(AI_REVIEW_HISTORY_STORAGE_KEY, serializeAIReviewHistoryStore(next))
+  }
 
   function resetWorkflow(next: AIDiscoveryHumanReviewCaseDraft | null) {
     setActivation(null)
@@ -163,6 +204,9 @@ export default function CurriculumAIHumanReviewQueue() {
     setActivation(result)
     setDecisionV2(null)
     setRegression(null)
+    if (result.accepted) {
+      appendHistory('case_activated', activatorRole || activatorName, 'current candidateState and evidence were rechecked before activation')
+    }
     setMessage(result.accepted ? 'Current candidateState 已重新核对，case 激活成功。' : result.errors.join(' · '))
   }
 
@@ -181,6 +225,7 @@ export default function CurriculumAIHumanReviewQueue() {
       )
       setDecisionV2(next)
       setRegression(null)
+      appendHistory(next.decision === 'defer' ? 'deferred' : 'decision_v2_recorded', reviewerRole || reviewerName, `${next.decision}: ${next.rationale}`)
       setMessage(next.decision === 'defer' ? '已记录暂缓 decision v2；不会生成新知识 proposal。' : 'decision v2 已绑定 current AI case，可进入新知识候选表单。')
     } catch (error) {
       setDecisionV2(null)
@@ -192,6 +237,11 @@ export default function CurriculumAIHumanReviewQueue() {
   function runNewKnowledgeProposal() {
     if (!selected || !currentCandidate || !decisionV2 || decisionV2.decision === 'defer') {
       setMessage('当前没有可进入 new_knowledge_candidate 的 decision v2。')
+      return
+    }
+    if (!aiHumanReviewDecisionStillCurrent(decisionV2)) {
+      setRegression(null)
+      setMessage('当前 candidateState 已变化，旧 decision v2 已 stale；请重新激活并审核。')
       return
     }
     const proposedGrades = parseGrades(gradeScope)
@@ -224,12 +274,17 @@ export default function CurriculumAIHumanReviewQueue() {
     }
     const result = runAINewKnowledgeSecondaryRegression(decisionV2, proposal)
     setRegression(result)
+    appendHistory(result.accepted ? 'regression_passed' : 'regression_blocked', reviewerRole || reviewerName, result.accepted ? 'new knowledge secondary regression passed' : result.errors.join(' · '))
     setMessage(result.accepted ? '二次回归通过：只生成 candidate snapshot，下一门是 content approval gate。' : result.errors.join(' · '))
   }
 
   function handoffToContentApproval() {
     if (!selected || !regression?.accepted || !regression.candidateSnapshot) {
       setMessage('只有 secondary regression 通过的 candidate snapshot 才能交接到 Content Approval。')
+      return
+    }
+    if (decisionV2 && !aiHumanReviewDecisionStillCurrent(decisionV2)) {
+      setMessage('candidateState 已变化，禁止把 stale decision 的 snapshot 交接到 Content Approval。')
       return
     }
     try {
@@ -241,6 +296,7 @@ export default function CurriculumAIHumanReviewQueue() {
         source: 'ai_human_review',
       })
       window.localStorage.setItem(CONTENT_APPROVAL_HANDOFF_STORAGE_KEY, JSON.stringify(handoff))
+      appendHistory('content_approval_handoff_prepared', reviewerRole || reviewerName, 'regression-passed snapshot handed to browser-local Content Approval preparation')
       navigate('/knowledge-map/content-approval')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Content Approval handoff 失败')
@@ -271,7 +327,7 @@ export default function CurriculumAIHumanReviewQueue() {
       </section>
 
       <section className="mt-4 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-3 text-xs leading-6 text-violet-800">
-        <strong>正式状态：</strong>本流程中的 case activation、decision v2、regression passed 都是治理中间态；固定 `autoApply=false / humanVerified=false`。真正批准还需要独立 curriculum content approval gate。
+        <strong>正式状态：</strong>本流程中的 activation、decision v2、regression passed 和历史事件都是治理中间态；固定 `autoApply=false / humanVerified=false`。真正批准仍需要独立 content gate。
       </section>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl bg-white p-4 shadow-sm">
@@ -297,6 +353,7 @@ export default function CurriculumAIHumanReviewQueue() {
                 <div className="flex flex-wrap items-start justify-between gap-3"><div><div className="text-xs font-black text-violet-700">{subjectLabels[selected.subject]} · {selected.grades.map((grade) => `${grade}年级`).join(' / ')}</div><h2 className="mt-1 text-xl font-black text-stone-900">{selected.candidateState.label}</h2><p className="mt-2 text-sm leading-6 text-stone-600">{selected.candidateState.learningDemand}</p></div><div className="text-right text-xs text-stone-500">{selected.candidateState.candidateKind}<br />humanVerified=false</div></div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2"><div className="rounded-2xl bg-violet-50 p-4"><div className="text-xs font-black text-violet-700">第一次促进入队</div><p className="mt-2 text-xs leading-6 text-stone-700">{selected.promotionRationale}</p><p className="mt-2 text-[10px] text-stone-400">{selected.promotedBy.name} · {selected.promotedBy.role}</p></div><div className="rounded-2xl bg-stone-50 p-4"><div className="text-xs font-black text-stone-500">当前来源</div><div className="mt-2 space-y-2">{currentCandidate.sourceRefs.map((ref) => <a key={ref} href={ref} target="_blank" rel="noreferrer" className="block break-all rounded-xl bg-white px-3 py-2 text-[11px] leading-5 text-blue-700 hover:underline">{ref}</a>)}</div></div></div>
                 {exactMatches.length ? <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-xs leading-6 text-rose-700"><strong>精确重复 blocker：</strong>{exactMatches.map((item) => `${item.id} · ${item.label}`).join('；')}。new_knowledge_candidate 将被拒绝，应转为合并/现有节点修订流程。</div> : null}
+                {decisionV2 && !decisionStillCurrent ? <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-bold leading-6 text-rose-700">当前 AI candidate 已与 decision v2 中保存的 caseState 不一致。该决定已 stale，必须重新激活并核对，不能继续 proposal 或 Content Approval handoff。</div> : null}
               </section>
 
               <section className="rounded-3xl bg-white p-5 shadow-sm">
@@ -323,9 +380,14 @@ export default function CurriculumAIHumanReviewQueue() {
                 <textarea value={aliases} onChange={(event) => setAliases(event.target.value)} rows={2} placeholder="别名，每行一条（可空）" className="mt-3 w-full rounded-xl border border-stone-200 p-3 text-sm" />
                 <textarea value={proposalRationale} onChange={(event) => setProposalRationale(event.target.value)} rows={3} placeholder="为什么应创建新的 framework anchor / KnowledgeNode 候选" className="mt-3 w-full rounded-xl border border-stone-200 p-3 text-sm leading-6" />
                 <div className="mt-3 rounded-2xl bg-amber-50 p-4"><div className="text-xs font-black text-amber-700">语义重复人工检查（必填）</div><select value={semanticDisposition} onChange={(event) => setSemanticDisposition(event.target.value as AISemanticDuplicateDisposition)} className="mt-2 h-10 w-full rounded-xl border border-amber-100 bg-white px-3 text-sm"><option value="no_obvious_duplicate">未发现明显语义重复</option><option value="possible_duplicate_reviewed">存在可能重复，已记录关联节点</option></select><textarea value={semanticNote} onChange={(event) => setSemanticNote(event.target.value)} rows={3} placeholder="说明检查过哪些相近概念，以及为什么仍应新建/继续候选" className="mt-2 w-full rounded-xl border border-amber-100 bg-white p-3 text-sm leading-6" />{semanticDisposition === 'possible_duplicate_reviewed' ? <textarea value={possibleExistingIds} onChange={(event) => setPossibleExistingIds(event.target.value)} rows={2} placeholder="可能重复的 existing ID，每行一条" className="mt-2 w-full rounded-xl border border-amber-100 bg-white p-3 font-mono text-xs" /> : null}</div>
-                <button type="button" onClick={runNewKnowledgeProposal} className="mt-3 rounded-full bg-emerald-600 px-4 py-2 text-sm font-black text-white">运行 proposal + secondary regression</button>
-                {regression ? <div className={`mt-4 rounded-2xl p-4 text-xs leading-6 ${regression.accepted ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-700'}`}><div className="font-black">{regression.accepted ? '二次回归通过 · readyForApprovalGate' : '候选被阻断'}</div>{regression.checks.map((check) => <div key={check.id}>{check.passed ? '✓' : '✕'} {check.id} · {check.detail}</div>)}{regression.errors.map((error) => <div key={error}>• {error}</div>)}{regression.candidateSnapshot ? <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => downloadJson(`ai-new-knowledge-${selected.candidateId}.json`, regression.candidateSnapshot)} className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-emerald-700">导出 candidate snapshot 审计副本</button><button type="button" onClick={handoffToContentApproval} className="rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-black text-white">带入 Content Approval →</button></div> : null}</div> : null}
+                <button type="button" onClick={runNewKnowledgeProposal} disabled={!decisionStillCurrent} className="mt-3 rounded-full bg-emerald-600 px-4 py-2 text-sm font-black text-white disabled:bg-stone-300">运行 proposal + secondary regression</button>
+                {regression ? <div className={`mt-4 rounded-2xl p-4 text-xs leading-6 ${regression.accepted ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-700'}`}><div className="font-black">{regression.accepted ? '二次回归通过 · readyForApprovalGate' : '候选被阻断'}</div>{regression.checks.map((check) => <div key={check.id}>{check.passed ? '✓' : '✕'} {check.id} · {check.detail}</div>)}{regression.errors.map((error) => <div key={error}>• {error}</div>)}{regression.candidateSnapshot ? <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => downloadJson(`ai-new-knowledge-${selected.candidateId}.json`, regression.candidateSnapshot)} className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-emerald-700">导出 candidate snapshot 审计副本</button><button type="button" onClick={handoffToContentApproval} disabled={!decisionStillCurrent} className="rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-black text-white disabled:bg-stone-300">带入 Content Approval →</button></div> : null}</div> : null}
               </section> : null}
+
+              <section className="rounded-3xl bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between gap-3"><h3 className="font-black text-stone-900">本地审核历史</h3><span className="text-xs font-bold text-stone-400">{selectedHistory.length} 条</span></div>
+                {selectedHistory.length ? <div className="mt-3 space-y-2">{selectedHistory.slice(0, 8).map((event) => <div key={event.id} className="rounded-2xl bg-stone-50 p-3 text-xs leading-5"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-black text-stone-800">{historyLabels[event.eventType]}</span><span className="text-stone-400">{new Date(event.at).toLocaleString()}</span></div><div className="mt-1 text-stone-500">{event.actorLabel} · {event.detail}</div><div className="mt-1 text-[10px] font-bold text-amber-700">local audit only · humanVerified=false</div></div>)}</div> : <p className="mt-3 text-xs text-stone-400">当前候选还没有本地精审历史。</p>}
+              </section>
 
               <section className="flex flex-wrap items-center gap-2 rounded-3xl bg-white p-5 shadow-sm"><button type="button" onClick={() => downloadJson(`ai-human-review-case-${selected.candidateId}.json`, selected)} className="rounded-full bg-stone-100 px-4 py-2 text-sm font-black text-stone-600">导出 case draft</button><button type="button" onClick={() => removeDraft(selected.id)} className="rounded-full bg-rose-100 px-4 py-2 text-sm font-black text-rose-700">从本地队列移除</button>{message ? <span className="text-xs font-bold text-stone-500">{message}</span> : null}</section>
             </> : null}
