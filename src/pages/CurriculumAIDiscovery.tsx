@@ -38,6 +38,7 @@ const confidenceLabels: Record<AIDiscoveryConfidence, string> = {
 const authorityLabels = {
   official_standard_2022: '教育部2022课标',
   publisher_current_resource: '出版社当前资源',
+  publisher_teaching_research: '出版社教研研究',
   publisher_catalog_version_unknown: '出版社目录·版次待核',
 }
 
@@ -177,7 +178,6 @@ export default function CurriculumAIDiscovery() {
           <Link to="/knowledge-map/verification" className="rounded-full bg-stone-900 px-4 py-2 text-sm font-black text-white">逐年级核对矩阵</Link>
         </div>
       </header>
-
       <section className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-6">
         {[
           ['AI候选', aiDiscoveryRegistrySummary.total],
@@ -195,7 +195,7 @@ export default function CurriculumAIDiscovery() {
       </section>
 
       <section className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-6 text-blue-800">
-        <strong>{aiDiscoveryBatches.length} 个搜索批次：</strong>{aiDiscoveryBatches.map((item) => item.batchId).join(' · ')}。第三批开始按领域缺口搜索。高置信框架候选主要来自教育部2022课标；出版社网页只支持其明确展示的教材主题/活动结构。
+        <strong>{aiDiscoveryBatches.length} 个搜索批次：</strong>{aiDiscoveryBatches.map((item) => item.batchId).join(' · ')}。领域缺口搜索中，教育部课标、出版社当前资源、出版社教研研究和版次未知目录会按不同 authority 显示；任何来源都不能跳过真人审核。
       </section>
 
       <div className="mt-4 flex flex-wrap gap-2 rounded-2xl bg-white p-4 shadow-sm">
