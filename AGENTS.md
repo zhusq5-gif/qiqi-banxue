@@ -27,7 +27,7 @@
 ## 当前状态与下一步
 
 - P1「打卡核心」实现 21/22：全量代码已上线 EdgeOne 并通过线上 E2E（注册→打卡→兑换→导出，2026-08-28）；4.2/4.4/5.2/6.3 经代码核对确认已实现，1.2 PWA 可安装性经真实浏览器核验通过，2.3 双账号 RLS 隔离经真实双账号显式测试通过（2026-09-08/09）
-- 剩余 1 项：7.2（iPad 真机验收：Safari 登录→打卡→兑换→导出 + 添加主屏幕全屏，建议用正式域名 qiqi.77xiaomiao.cn）；iPad Air 视口模拟预检已全通过（2026-09-09），预检中发现并修复 StatsTab 日期解析 bug（`Date.UTC` 月份未减一导致本周图表溢出 33 列）；测试账号：zhusq0506@qq.com / Qiqi@2026a、383534737@qq.com / Qiqi@2026c（RLS 回归用）
+- 剩余 1 项：7.2（iPad 真机验收：Safari 登录→打卡→兑换→导出 + 添加主屏幕全屏，建议用正式域名 qiqi.77xiaomiao.cn）；iPad Air 视口模拟预检已全通过（2026-09-09），预检中发现并修复 StatsTab 日期解析 bug（`Date.UTC` 月份未减一导致本周图表溢出 33 列）；测试账号（RLS 回归用）只保存在本地私有记录，禁止写入仓库
 - 性能：构建产物已代码分割——主包 180KB + vendor-cloudbase 750KB（SDK 独立 chunk，hash 稳定，PWA 增量更新免重复下载）；页面级 React.lazy（Today/Parent）
 - `.edgeone/` 已加入 .gitignore 并取消跟踪（2026-09-09 清理）
 - 正式域名上线三步（2026-09-06 起）：① CloudBase 安全域名已加 qiqi.77xiaomiao.cn ✅ ② EdgeOne 控制台绑定自定义域名+免费证书（chester 操作）③ DNSPod 加 CNAME（绑定弹窗给值）
